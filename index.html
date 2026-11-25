@@ -183,6 +183,7 @@ button,input{font:inherit;color:inherit}
 .setrow:last-child{border-bottom:0;padding-bottom:0}
 .setrow p{margin-top:6px}
 
+.iobox{width:100%;font:13px/1.4 ui-monospace,Menlo,Consolas,monospace;padding:10px;border:1.5px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);resize:vertical}
 .modal-bg{position:fixed;inset:0;background:rgba(8,14,24,.58);display:grid;place-items:center;padding:16px;z-index:20}
 .modal{background:var(--surface);border-radius:var(--r);padding:22px;max-width:430px;width:100%;border:1px solid var(--line)}
 .modal h2{margin-bottom:8px}
@@ -240,7 +241,11 @@ zh:{
  'wk.stat':'錯 {w} 次 · 做過 {s} 次', 'wk.all':'全部（{n}）', 'wk.start':'開始弱項練習卷',
  'hs.title':'成績紀錄', 'hs.empty':'未有成績紀錄。', 'hs.view':'查看', 'kind.m':'模擬試卷', 'kind.w':'弱項練習卷', 'kind.c':'分章練習',
  'set.title':'設定', 'set.lang':'介面語言', 'set.zh':'中文解釋', 'set.zhOn':'顯示', 'set.zhOff':'隱藏', 'set.zhHint':'題目一律以英文顯示；解釋會先顯示英文，再顯示中文。',
- 'set.theme':'外觀', 'th.auto':'跟隨系統', 'th.light':'淺色', 'th.dark':'深色', 'set.sync':'進度儲存', 'set.reset':'清除所有進度', 'set.resetHint':'刪除所有成績紀錄和題目統計，無法復原。'
+ 'set.theme':'外觀', 'th.auto':'跟隨系統', 'th.light':'淺色', 'th.dark':'深色', 'set.sync':'進度儲存', 'set.reset':'清除所有進度', 'set.resetHint':'刪除所有成績紀錄和題目統計，無法復原。',
+ 'io.title':'匯出／匯入進度', 'io.hint':'匯出會產生一段包含所有成績紀錄和題目統計的文字。匯入會與目前的進度合併，不會刪除任何紀錄。',
+ 'io.export':'匯出', 'io.copy':'複製', 'io.download':'下載檔案', 'io.copied':'已複製，請貼到記事本並儲存。', 'io.copyFail':'未能自動複製，請手動全選文字後複製。',
+ 'io.file':'選擇備份檔案', 'io.paste':'或者貼上備份文字', 'io.import':'匯入', 'io.bad':'看不懂這段文字，請確認是完整的備份。',
+ 'm.imp.title':'匯入並合併進度？', 'm.imp.body':'備份有 {h} 份試卷紀錄（其中 {nh} 份是新的）和 {s} 條題目統計。合併後不會刪除任何現有紀錄。', 'm.imp.ok':'合併', 'io.done':'已合併匯入的進度。'
 },
 en:{
  'app.mock':'mock tests', 'tagline':'{n} questions in the bank · 24 per paper · 45 minutes · 18 correct to pass',
@@ -269,7 +274,11 @@ en:{
  'wk.stat':'Wrong {w} times · attempted {s} times', 'wk.all':'All ({n})', 'wk.start':'Start weak-spot practice',
  'hs.title':'Results', 'hs.empty':'No results yet.', 'hs.view':'View', 'kind.m':'Mock exam', 'kind.w':'Weak-spot practice', 'kind.c':'Chapter practice',
  'set.title':'Settings', 'set.lang':'Interface language', 'set.zh':'Chinese explanations', 'set.zhOn':'Show', 'set.zhOff':'Hide', 'set.zhHint':'Questions are always in English. Explanations appear in English first, then in Chinese.',
- 'set.theme':'Appearance', 'th.auto':'Match system', 'th.light':'Light', 'th.dark':'Dark', 'set.sync':'Progress storage', 'set.reset':'Clear all progress', 'set.resetHint':'Deletes all results and question statistics. This cannot be undone.'
+ 'set.theme':'Appearance', 'th.auto':'Match system', 'th.light':'Light', 'th.dark':'Dark', 'set.sync':'Progress storage', 'set.reset':'Clear all progress', 'set.resetHint':'Deletes all results and question statistics. This cannot be undone.',
+ 'io.title':'Export / import progress', 'io.hint':'Export creates text containing all results and question statistics. Import merges with your current progress and never deletes anything.',
+ 'io.export':'Export', 'io.copy':'Copy', 'io.download':'Download file', 'io.copied':'Copied. Paste it into a text file and save it.', 'io.copyFail':'Could not copy automatically. Select all the text and copy it yourself.',
+ 'io.file':'Choose a backup file', 'io.paste':'or paste backup text', 'io.import':'Import', 'io.bad':'This text could not be read. Check that it is a complete backup.',
+ 'm.imp.title':'Import and merge progress?', 'm.imp.body':'The backup has {h} results ({nh} new) and {s} question statistics. Merging never deletes existing records.', 'm.imp.ok':'Merge', 'io.done':'Imported progress has been merged.'
 }};
 
 const S = {view:'home', set:{lang:'zh', zh:true, theme:'auto', fb:{m:'e', w:'i', c:'i'}}, ses:null, res:null, resFilter:'wrong', weakCh:0, sync:'connecting'};
@@ -666,6 +675,15 @@ function vSettings(){
     '<div class="setrow"><span class="lbl" id="lbl-zh">' + esc(t('set.zh')) + '</span>' + radios('zh', zhOn() ? 1 : 0, [[1, t('set.zhOn')], [0, t('set.zhOff')]]) + '<p class="muted small">' + esc(t('set.zhHint')) + '</p></div>' +
     '<div class="setrow"><span class="lbl" id="lbl-theme">' + esc(t('set.theme')) + '</span>' + radios('theme', S.set.theme, [['auto', t('th.auto')], ['light', t('th.light')], ['dark', t('th.dark')]]) + '</div>' +
     '<div class="setrow"><span class="lbl">' + esc(t('set.sync')) + '</span><p id="sync" style="margin-top:0">' + syncHTML() + '</p></div>' +
+    '<div class="setrow"><span class="lbl">' + esc(t('io.title')) + '</span><p class="muted small" style="margin:0 0 10px">' + esc(t('io.hint')) + '</p>' +
+      '<div class="acts" style="margin-top:0"><button class="btn sm" id="btn-export" data-act="exp">' + esc(t('io.export')) + '</button></div>' +
+      '<div id="exp-box" hidden style="margin-top:10px"><textarea id="exp-text" class="iobox" readonly rows="5"></textarea>' +
+      '<div class="acts" style="margin-top:8px"><button class="btn sm ghost" id="btn-copy" data-act="copyexp">' + esc(t('io.copy')) + '</button>' +
+      (inArtifact() ? '' : '<button class="btn sm ghost" id="btn-dl" data-act="dlexp">' + esc(t('io.download')) + '</button>') + '</div></div>' +
+      '<label class="lbl" for="imp-file" style="margin-top:16px">' + esc(t('io.file')) + '</label><input type="file" id="imp-file" accept=".json,.txt,application/json,text/plain">' +
+      '<label class="lbl" for="imp-text" style="margin-top:10px">' + esc(t('io.paste')) + '</label><textarea id="imp-text" class="iobox" rows="4"></textarea>' +
+      '<div class="acts" style="margin-top:8px"><button class="btn sm" id="btn-import" data-act="imp">' + esc(t('io.import')) + '</button></div>' +
+      '<p class="small" id="io-msg" role="status" style="margin-top:8px"></p></div>' +
     '<div class="setrow"><button class="btn danger" id="btn-reset" data-act="reset">' + esc(t('set.reset')) + '</button><p class="muted small">' + esc(t('set.resetHint')) + '</p></div></section>' +
     '<footer class="foot"><p>' + esc(t('foot.note')) + '</p></footer>';
 }
@@ -744,6 +762,17 @@ function begin(kind, ch){
   if (S.ses) modal({title:t('m.new.title'), body:t('m.new.body'), ok:t('m.new.ok'), cancel:t('m.cancel'), onOk:() => startSession(kind, ch)});
   else startSession(kind, ch);
 }
+function inArtifact(){ return /claudeusercontent\.com$/.test(location.hostname) || !!(window.claude && window.claude.use); }
+function parseImport(txt){
+  let o = JSON.parse(String(txt).trim().replace(/^\uFEFF/, ''));
+  if (o && typeof o.p === 'string') o = JSON.parse(o.p);
+  else if (o && o.app === 'lituk') o = o.progress;
+  if (!valid(o)) throw new Error('bad');
+  const s = {};
+  for (const k in o.s) { const v = o.s[k]; if (Array.isArray(v) && v.length >= 4 && v.slice(0, 4).every(x => typeof x === 'number')) s[k] = v.slice(0, 4); }
+  const h = o.h.filter(x => x && typeof x.t === 'number' && typeof x.sc === 'number' && typeof x.n === 'number' && ['m', 'w', 'c'].includes(x.k));
+  return {v:1, r:o.r || 0, s, h};
+}
 const ACT = {
   start(el){ begin(el.dataset.kind, +el.dataset.ch || 0); },
   resume(){ show('test'); tick(); },
@@ -760,6 +789,30 @@ const ACT = {
   filter(el){ S.resFilter = el.dataset.f; render(); const b = document.getElementById('flt-' + S.resFilter); if (b) b.focus(); },
   weakch(el){ S.weakCh = +el.dataset.ch; render(); },
   open(el){ const r = P.h.find(x => String(x.t) === el.dataset.t); if (r) { S.res = r; S.resFilter = 'wrong'; show('result'); } },
+  exp(){
+    const box = document.getElementById('exp-box'), ta = document.getElementById('exp-text');
+    ta.value = JSON.stringify({app:'lituk', v:1, exported:Date.now(), progress:P, settings:S.set});
+    box.hidden = false; ta.focus(); ta.select();
+  },
+  copyexp(){
+    const ta = document.getElementById('exp-text'), msg = document.getElementById('io-msg');
+    const ok = () => { msg.textContent = t('io.copied'); };
+    const manual = () => { ta.focus(); ta.select(); let done = false; try { done = document.execCommand('copy'); } catch (e) {} msg.textContent = t(done ? 'io.copied' : 'io.copyFail'); };
+    try { navigator.clipboard.writeText(ta.value).then(ok, manual); } catch (e) { manual(); }
+  },
+  dlexp(){
+    const ta = document.getElementById('exp-text');
+    try { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([ta.value], {type:'application/json'})); a.download = 'lituk-backup-' + new Date().toISOString().slice(0, 10) + '.json'; document.body.appendChild(a); a.click(); a.remove(); } catch (e) {}
+  },
+  imp(){
+    const msg = document.getElementById('io-msg'); let inc;
+    try { inc = parseImport(document.getElementById('imp-text').value); } catch (e) { msg.textContent = t('io.bad'); return; }
+    const have = new Set(P.h.map(h => h.t));
+    modal({title:t('m.imp.title'), body:t('m.imp.body', {h:inc.h.length, nh:inc.h.filter(h => !have.has(h.t)).length, s:Object.keys(inc.s).length}), ok:t('m.imp.ok'), cancel:t('m.cancel'), onOk:() => {
+      inc.r = P.r || 0; P = merge(P, inc); saveProg(true); render();
+      const m = document.getElementById('io-msg'); if (m) m.textContent = t('io.done');
+    }});
+  },
   reset(){
     modal({title:t('m.reset.title'), body:t('m.reset.body'), ok:t('m.reset.ok'), cancel:t('m.cancel'), danger:true, onOk:() => {
       P = blank(Date.now()); S.ses = null; S.res = null; saveSes(); saveProg(true); render();
@@ -779,6 +832,11 @@ document.addEventListener('change', e => {
   const el = e.target; if (!el || !el.dataset) return;
   if (el.name === 'opt') { choose(+el.value); return; }
   if (el.dataset.fb) { S.set.fb[el.dataset.fb] = el.value === 'i' ? 'i' : 'e'; saveSet(); return; }
+  if (el.id === 'imp-file' && el.files && el.files[0]) {
+    const r = new FileReader();
+    r.onload = () => { const ta = document.getElementById('imp-text'); if (ta) ta.value = String(r.result || ''); };
+    r.readAsText(el.files[0]); return;
+  }
   if (el.dataset.set) {
     const k = el.dataset.set;
     if (k === 'lang') S.set.lang = el.value === 'en' ? 'en' : 'zh';
