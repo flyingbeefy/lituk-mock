@@ -203,6 +203,11 @@ button,input{font:inherit;color:inherit}
 .prio .rk{font:800 1.1rem/1 var(--font-display);color:var(--muted)}
 .miss{margin:8px 0 0;padding-left:18px;font-size:.92rem}
 .miss li{margin-top:4px}
+.tmbar .tb{fill:var(--brand)}
+.tmbar .hit{fill:transparent}
+.tmbar text{fill:var(--muted);font:11px var(--font-body)}
+.tmbar .gl{stroke:var(--line);stroke-width:1}
+.tmch{display:grid;grid-template-columns:1fr auto;gap:4px 12px;margin-top:8px;font-size:.92rem}
 .modal-bg{position:fixed;inset:0;background:rgba(8,14,24,.58);display:grid;place-items:center;padding:16px;z-index:20}
 .modal{background:var(--surface);border-radius:var(--r);padding:22px;max-width:430px;width:100%;border:1px solid var(--line)}
 .modal h2{margin-bottom:8px}
@@ -251,6 +256,10 @@ zh:{
  'an.predNote2':'按每份模擬試卷各章題數（第 1、2 章各 1 題，第 3 章 9 題，第 4 章 7 題，第 5 章 6 題）乘以各章預計真試正確率計算。預計真試正確率＝做過的題目按重做正確率計，未做過的按第一次作答正確率計。只供參考。',
  'an.howTitle':'時間點樣估算', 'an.how':'真試題目對你來說等於新題目。做過並重溫過的題目，你通常答得好（重做正確率）；未見過的題目則較差（第一次作答正確率）。每多做一條新題目，預計真試正確率就會上升少少。程式按你自己的作答速度，計算要做多少新題目（每條另加一次重溫）才達到目標，並以範圍顯示。',
  'an.prio2':'每份卷預計失 {n} 分',
+ 'tm.title':'溫習時間', 'tm.total':'做題時間', 'tm.answers':'已答題數', 'tm.papers':'已交試卷', 'tm.perQ':'平均每題',
+ 'tm.byCh':'各章用時', 'tm.daily':'最近 14 日每日做題時間', 'tm.min':'{n} 分鐘', 'tm.hm':'{h} 小時 {m} 分鐘', 'tm.sec':'{n} 秒',
+ 'tm.note':'只計已交卷的試卷，不計溫筆記和中途離開的試卷。', 'tm.capNote':'有 {n} 份試卷的平均每題用時超過你平時的 3 倍，相信中途離開過，只按 3 倍計算。', 'tm.capWait':'交滿 5 份試卷後，會自動扣除中途離開的時間。',
+ 'tm.chart':'最近 14 日每日做題分鐘：{s}',
  'resume.title':'你有一份未完成的試卷', 'resume.meta':'{kind} · 已答 {a} / {n} 題', 'resume.go':'繼續作答', 'resume.drop':'放棄', 'resume.expired':'這份試卷的時間已到，按「繼續作答」會即時交卷。',
  'tile.avg':'最近 5 次模擬試卷平均分', 'tile.none':'未有紀錄', 'tile.seen':'已做過的題目', 'tile.mastered':'已掌握（連續答對兩次）', 'tile.weak':'弱項題目',
  'mock.title':'模擬試卷', 'mock.desc':'按各章比例隨機抽 24 題，限時 45 分鐘，答對 18 題（75%）合格。抽題不會偏向錯題，用來判斷真實水平。',
@@ -299,6 +308,10 @@ en:{
  'an.predNote2':'Questions per mock paper for each chapter (1, 1, 9, 7 and 6) multiplied by your expected real-test accuracy in that chapter. Questions you have seen count at your repeat accuracy, unseen ones at your first-attempt accuracy. A guide only.',
  'an.howTitle':'How the time is estimated', 'an.how':'Real test questions are new to you. You do well on questions you have seen and reviewed (repeat accuracy) and less well on ones you have not (first-attempt accuracy). Each new question you work through nudges your expected accuracy up. Using your own pace, the app works out how many new questions (each with one review) you need to reach the target, shown as a range.',
  'an.prio2':'About {n} marks lost per paper',
+ 'tm.title':'Study time', 'tm.total':'Time on questions', 'tm.answers':'Questions answered', 'tm.papers':'Papers submitted', 'tm.perQ':'Average per question',
+ 'tm.byCh':'Time by chapter', 'tm.daily':'Minutes of questions per day, last 14 days', 'tm.min':'{n} min', 'tm.hm':'{h} h {m} min', 'tm.sec':'{n} s',
+ 'tm.note':'Counts submitted papers only; time with the notes and papers you left are not included.', 'tm.capNote':'{n} papers averaged more than 3 times your usual time per question, so you probably stepped away; they are counted at 3 times your usual pace.', 'tm.capWait':'Once you have submitted 5 papers, time spent away from a paper is removed automatically.',
+ 'tm.chart':'Minutes of questions per day over the last 14 days: {s}',
  'resume.title':'You have an unfinished paper', 'resume.meta':'{kind} · {a} of {n} answered', 'resume.go':'Continue', 'resume.drop':'Discard', 'resume.expired':'Time has run out on this paper. Choosing Continue will submit it straight away.',
  'tile.avg':'Average of last 5 mock exams', 'tile.none':'No results yet', 'tile.seen':'Questions attempted', 'tile.mastered':'Mastered (right twice in a row)', 'tile.weak':'Weak-spot questions',
  'mock.title':'Mock exam', 'mock.desc':'24 questions drawn at random in proportion to each chapter, 45 minutes, 18 correct (75%) to pass. The draw is not tilted towards your mistakes, so it shows your real level.',
@@ -795,6 +808,43 @@ function chapterModel(A){
   }
   return {info, mocks, papers};
 }
+function fmtMin(sec){ const m = Math.round(sec / 60); return m >= 60 ? t('tm.hm', {h:Math.floor(m / 60), m:m % 60}) : t('tm.min', {n:m}); }
+function timeCard(){
+  const hs = P.h.filter(h => h.d > 0 && h.n > 0);
+  if (!hs.length) return '';
+  const sp = hs.map(h => h.d / h.n).sort((a, b) => a - b), med = sp[Math.floor(sp.length / 2)];
+  const capOn = hs.length >= 5; let capped = 0;
+  const adj = h => { if (!capOn) return h.d; const c = 3 * med * h.n; if (h.d > c) { capped++; return c; } return h.d; };
+  const perCh = {1:0, 2:0, 3:0, 4:0, 5:0}, days = new Map(); let total = 0, answers = 0;
+  for (const h of hs) {
+    const d = adj(h); total += d; answers += h.n;
+    if (h.q && h.q.length) { const qs = h.q.map(id => BYID.get(id)).filter(Boolean); for (const q of qs) perCh[q.ch] += d / qs.length; }
+    else if (h.k === 'c' && h.c) perCh[h.c] += d;
+    else for (const ch in QUOTA) perCh[ch] += d * QUOTA[ch] / 24;
+    const k = dayKey(h.t); days.set(k, (days.get(k) || 0) + d);
+  }
+  const keys = []; for (let i = 13; i >= 0; i--) keys.push(dayKey(Date.now() - i * 864e5));
+  const vals = keys.map(k => Math.round((days.get(k) || 0) / 60));
+  const W = 320, H = 130, L = 30, R = 6, T = 10, B = 22, mx = Math.max(10, Math.ceil(Math.max.apply(null, vals) / 10) * 10);
+  const bw = (W - L - R) / keys.length, y = v => T + (1 - v / mx) * (H - T - B);
+  let g = '';
+  for (const v of [0, mx / 2, mx]) g += '<line class="gl" x1="' + L + '" x2="' + (W - R) + '" y1="' + y(v) + '" y2="' + y(v) + '"/><text x="' + (L - 5) + '" y="' + (y(v) + 4) + '" text-anchor="end">' + v + '</text>';
+  keys.forEach((k, i) => {
+    const x = L + i * bw, v = vals[i], tip = dayLabel(k) + '：' + t('tm.min', {n:v});
+    g += '<g><title>' + esc(tip) + '</title><rect class="hit" x="' + x.toFixed(1) + '" y="' + T + '" width="' + bw.toFixed(1) + '" height="' + (H - T - B) + '"/>' +
+      (v ? '<rect class="tb" x="' + (x + 2).toFixed(1) + '" y="' + y(v).toFixed(1) + '" width="' + Math.max(bw - 4, 2).toFixed(1) + '" height="' + (y(0) - y(v)).toFixed(1) + '" rx="3"/>' : '') + '</g>';
+  });
+  g += '<text x="' + L + '" y="' + (H - 6) + '">' + esc(dayLabel(keys[0])) + '</text><text x="' + (W - R) + '" y="' + (H - 6) + '" text-anchor="end">' + esc(dayLabel(keys[13])) + '</text>';
+  const aria = t('tm.chart', {s:keys.map((k, i) => dayLabel(k) + ' ' + vals[i]).join(', ')});
+  return '<section class="card"><h2>' + esc(t('tm.title')) + '</h2><div class="anstats">' +
+    '<div><b>' + esc(fmtMin(total)) + '</b><span>' + esc(t('tm.total')) + '</span></div>' +
+    '<div><b>' + answers + '</b><span>' + esc(t('tm.answers')) + '</span></div>' +
+    '<div><b>' + hs.length + '</b><span>' + esc(t('tm.papers')) + '</span></div>' +
+    '<div><b>' + esc(t('tm.sec', {n:Math.round(med)})) + '</b><span>' + esc(t('tm.perQ')) + '</span></div></div>' +
+    '<h3 style="margin-top:14px">' + esc(t('tm.daily')) + '</h3><svg class="anchart tmbar" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(aria) + '">' + g + '</svg>' +
+    '<h3 style="margin-top:14px">' + esc(t('tm.byCh')) + '</h3><div class="tmch">' + [1, 2, 3, 4, 5].map(ch => '<span>' + ch + '. ' + esc(chName(ch)) + '</span><b>' + esc(fmtMin(perCh[ch])) + '</b>').join('') + '</div>' +
+    '<p class="muted small" style="margin-top:10px">' + esc(t('tm.note')) + ' ' + esc(capOn ? (capped ? t('tm.capNote', {n:capped}) : '') : t('tm.capWait')) + '</p></section>';
+}
 function vAnalysis(){
   const A = chapterAnswers(), total = Object.values(A).reduce((s, r) => s + r.length, 0);
   let h = mast() + '<section class="card"><h2>' + esc(t('an.title')) + '</h2><p class="muted">' + esc(t('an.desc')) + '</p></section>';
@@ -814,6 +864,7 @@ function vAnalysis(){
     return '<li><span class="rk">' + (i + 1) + '</span><span><b>' + ch + '. ' + esc(chName(ch)) + '</b><br>' + esc(t('an.prio2', {n:Math.round(I.lose * 10) / 10})) + '<br><span class="muted small">' + esc(sub) + '</span></span></li>';
   }).join('') + '</ol>' + (timed.length ? '<p class="annote"><b>' + esc(needs.length ? t('an.total', {a:sa, b:sb}) : t('an.allMet')) + '</b></p>' : '') +
     '<details style="margin-top:10px"><summary class="small" style="cursor:pointer">' + esc(t('an.howTitle')) + '</summary><p class="muted small" style="margin-top:6px">' + esc(t('an.how')) + '</p></details></section>';
+  h += timeCard();
   for (let ch = 1; ch <= 5; ch++) {
     const I = info[ch];
     const miss = Q.filter(q => q.ch === ch && isWeak(q)).sort((a, b) => P.s[b.id][1] - P.s[a.id][1] || P.s[b.id][0] - P.s[a.id][0]).slice(0, 3);
