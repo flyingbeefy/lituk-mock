@@ -262,7 +262,7 @@ zh:{
  'foot.note':'題目由 Claude 根據官方手冊《Life in the United Kingdom: A Guide for New Residents》的內容編寫，並非真實試題。如有出入，以官方手冊為準。',
  'sync.ok':'進度已同步到你的 Claude 帳戶', 'sync.local':'進度只儲存在這部裝置的瀏覽器', 'sync.connecting':'正在連接雲端儲存…', 'sync.retry':'暫時未能同步，稍後會再試',
  'test.q':'第 {i} / {n} 題', 'test.quit':'離開', 'test.finish':'交卷', 'test.prev':'上一題', 'test.next':'下一題', 'test.skip':'先跳過', 'test.check':'對答案',
- 'test.flag':'標記', 'test.flagged':'已標記', 'test.overview':'題目總覽', 'test.two':'請選擇兩個答案。', 'test.correct':'答對了', 'test.incorrect':'答錯了',
+ 'test.flag':'標記', 'test.flagged':'已標記', 'test.guess':'我係估嘅', 'test.guessOn':'已標記估中', 'test.guessed':'已當作答錯', 'res.guessTag':'估中（當答錯）', 'test.guessHint':'答啱但係估中嘅題目，會當答錯處理，放入弱項清單。', 'test.overview':'題目總覽', 'test.two':'請選擇兩個答案。', 'test.correct':'答對了', 'test.incorrect':'答錯了',
  'test.answer':'正確答案', 'test.timer':'剩餘時間', 'lg.ans':'已作答', 'lg.flag':'已標記', 'lg.cur':'粗框為目前題目',
  'm.finish.title':'確定交卷？', 'm.finish.un':'還有 {n} 題未作答，未作答的題目會當作答錯。', 'm.finish.all':'所有題目都已作答。', 'm.finish.ok':'交卷', 'm.back':'返回試卷',
  'm.quit.title':'離開這份試卷？', 'm.quit.e':'這份試卷的作答不會保留，也不會計入成績紀錄。', 'm.quit.i':'這份試卷不會計入成績紀錄，但已對答案的題目仍會計入題目統計。', 'm.quit.ok':'離開',
@@ -310,7 +310,7 @@ en:{
  'foot.note':'Questions were written by Claude from the content of the official handbook, Life in the United Kingdom: A Guide for New Residents. They are not real test questions. Where anything differs, the handbook is right.',
  'sync.ok':'Progress is synced to your Claude account', 'sync.local':'Progress is saved only in this browser', 'sync.connecting':'Connecting to cloud storage…', 'sync.retry':'Could not sync just now; will try again',
  'test.q':'Question {i} of {n}', 'test.quit':'Leave', 'test.finish':'Finish', 'test.prev':'Previous', 'test.next':'Next', 'test.skip':'Skip for now', 'test.check':'Check answer',
- 'test.flag':'Flag', 'test.flagged':'Flagged', 'test.overview':'All questions', 'test.two':'Select TWO answers.', 'test.correct':'Correct', 'test.incorrect':'Incorrect',
+ 'test.flag':'Flag', 'test.flagged':'Flagged', 'test.guess':'I guessed', 'test.guessOn':'Marked as guess', 'test.guessed':'Counted as wrong', 'res.guessTag':'Guessed (counted wrong)', 'test.guessHint':'A correct answer you guessed is counted as wrong and added to your weak spots.', 'test.overview':'All questions', 'test.two':'Select TWO answers.', 'test.correct':'Correct', 'test.incorrect':'Incorrect',
  'test.answer':'Correct answer', 'test.timer':'Time left', 'lg.ans':'Answered', 'lg.flag':'Flagged', 'lg.cur':'Thick outline is the current question',
  'm.finish.title':'Finish the test?', 'm.finish.un':'{n} questions are unanswered. Unanswered questions count as wrong.', 'm.finish.all':'You have answered every question.', 'm.finish.ok':'Finish', 'm.back':'Back to test',
  'm.quit.title':'Leave this paper?', 'm.quit.e':'Your answers will not be kept and no result will be recorded.', 'm.quit.i':'No result will be recorded, but questions you have already checked still count in your question statistics.', 'm.quit.ok':'Leave',
@@ -524,7 +524,7 @@ const ready = (q, a) => a.length === (q.type === 'm' ? 2 : 1);
 /* ---------- session ---------- */
 function startSession(kind, ch){
   const qs = kind === 'm' ? pickMock() : kind === 'w' ? pickWeak() : pickChapter(ch);
-  S.ses = {id:Date.now(), kind, ch:ch || 0, fb:S.set.fb[kind], q:qs.map(q => q.id), ans:qs.map(() => []), chk:qs.map(() => 0), flag:qs.map(() => 0), cur:0, t0:Date.now(), limit:kind === 'c' ? 0 : LIMIT};
+  S.ses = {id:Date.now(), kind, ch:ch || 0, fb:S.set.fb[kind], q:qs.map(q => q.id), ans:qs.map(() => []), chk:qs.map(() => 0), flag:qs.map(() => 0), guess:qs.map(() => 0), cur:0, t0:Date.now(), limit:kind === 'c' ? 0 : LIMIT};
   saveSes(); show('test');
 }
 const remaining = () => S.ses && S.ses.limit ? S.ses.limit - Math.floor((Date.now() - S.ses.t0) / 1000) : null;
@@ -536,10 +536,12 @@ function finish(isTimeout){
   qs.forEach((q, i) => {
     const a = z.ans[i], ok = isRight(q, a);
     if (ok) sc++;
-    if (!z.chk[i] && a.length) record(q, ok);
+    if (!z.chk[i] && a.length) record(q, ok && !(z.guess && z.guess[i]));
   });
   const used = Math.round((Date.now() - z.t0) / 1000);
   const item = {t:z.id, k:z.kind, c:z.ch, f:z.fb, sc, n:qs.length, d:z.limit ? Math.min(used, z.limit) : used, to:isTimeout ? 1 : 0, q:z.q.slice(), a:z.ans.map(a => a.join(''))};
+  const g = z.guess ? z.guess.map((v, i) => v && isRight(qs[i], z.ans[i]) ? i : -1).filter(i => i >= 0) : [];
+  if (g.length) item.g = g;
   P.h.push(item); trimHistory();
   S.ses = null; saveSes(); saveProg(true);
   S.res = item; S.resFilter = sc === qs.length ? 'all' : 'wrong';
@@ -630,7 +632,7 @@ function vTest(){
     h += '<div class="fbk ' + (ok ? 'ok' : 'bad') + '" id="fbk" role="status" tabindex="-1"><p class="verdict">' + esc(t(ok ? 'test.correct' : 'test.incorrect')) + '</p>' + expHTML(q) + '</div>';
   }
   h += '<div class="acts"><button class="btn ghost" id="btn-prev" data-act="prev"' + (i === 0 ? ' disabled' : '') + '>' + esc(t('test.prev')) + '</button>' +
-    '<button class="btn ghost' + (z.flag[i] ? ' on' : '') + '" id="btn-flag" data-act="flag" aria-pressed="' + (z.flag[i] ? 'true' : 'false') + '">' + esc(t(z.flag[i] ? 'test.flagged' : 'test.flag')) + '</button><span class="sp"></span>';
+    '<button class="btn ghost' + (z.flag[i] ? ' on' : '') + '" id="btn-flag" data-act="flag" aria-pressed="' + (z.flag[i] ? 'true' : 'false') + '">' + esc(t(z.flag[i] ? 'test.flagged' : 'test.flag')) + '</button>' + guessBtn(z, i, q, a, done) + '<span class="sp"></span>';
   if (z.fb === 'i' && !done) {
     if (!last) h += '<button class="btn ghost" id="btn-skip" data-act="next">' + esc(t('test.skip')) + '</button>';
     h += '<button class="btn" id="btn-check" data-act="check"' + (ready(q, a) ? '' : ' disabled') + '>' + esc(t('test.check')) + '</button>';
@@ -653,9 +655,16 @@ function cellCls(z, k){
 function expHTML(q){
   return '<div class="exp"><p lang="en-GB">' + esc(q.en) + '</p>' + (zhOn() ? '<p class="zh" lang="zh-HK">' + esc(q.zh) + '</p>' : '') + '</div>';
 }
-function revItem(q, a, num, seed){
-  const ok = isRight(q, a), rs = rightSet(q);
-  let h = '<li class="rev ' + (ok ? 'ok' : 'bad') + '"><div class="revhead">' + (num ? '<b>' + num + '</b>' : '') + '<span class="tag">' + esc(t(ok ? 'res.right' : a.length ? 'res.wrongTag' : 'res.none')) + '</span><span>' + esc(t('res.ch', {n:q.ch})) + '</span></div>' +
+function guessBtn(z, i, q, a, done){
+  if (!z.guess) z.guess = z.q.map(() => 0);
+  const v = z.guess[i];
+  if (done && (!isRight(q, a))) return '';
+  if (v === 2) return '<button class="btn ghost on" id="btn-guess" disabled>' + esc(t('test.guessed')) + '</button>';
+  return '<button class="btn ghost' + (v ? ' on' : '') + '" id="btn-guess" data-act="guess" aria-pressed="' + (v ? 'true' : 'false') + '" title="' + esc(t('test.guessHint')) + '">' + esc(t(v ? 'test.guessOn' : 'test.guess')) + '</button>';
+}
+function revItem(q, a, num, seed, guessed){
+  const ok = isRight(q, a) && !guessed, rs = rightSet(q);
+  let h = '<li class="rev ' + (ok ? 'ok' : 'bad') + '"><div class="revhead">' + (num ? '<b>' + num + '</b>' : '') + '<span class="tag">' + esc(t(guessed ? 'res.guessTag' : ok ? 'res.right' : a.length ? 'res.wrongTag' : 'res.none')) + '</span><span>' + esc(t('res.ch', {n:q.ch})) + '</span></div>' +
     stem(q) + '<p class="qtext sm" lang="en-GB">' + esc(q.q) + '</p><ul class="ropts">';
   order(seed, q).forEach(oi => {
     const right = rs.includes(oi), sel = a.includes(oi);
@@ -673,7 +682,7 @@ function vResult(){
     '<div class="cardfoot"><button class="btn ghost" id="btn-home" data-act="home">' + esc(t('res.home')) + '</button><button class="btn" id="btn-again" data-act="again">' + esc(t('res.again')) + '</button></div></section>';
   if (!r.q || !r.a) return h + '<section class="card"><p class="muted">' + esc(t('res.nodetail')) + '</p></section>';
   const rows = [];
-  r.q.forEach((id, i) => { const q = BYID.get(id); if (q) rows.push({q, a:String(r.a[i] || '').split('').map(Number), num:i + 1}); });
+  r.q.forEach((id, i) => { const q = BYID.get(id); if (q) rows.push({q, a:String(r.a[i] || '').split('').map(Number), num:i + 1, g:!!(r.g && r.g.includes(i))}); });
   h += '<section class="card"><h2>' + esc(t('res.byCh')) + '</h2><div class="chlist">';
   for (let ch = 1; ch <= 5; ch++) {
     const rs = rows.filter(x => x.q.ch === ch); if (!rs.length) continue;
@@ -685,7 +694,7 @@ function vResult(){
   h += '<section><h2>' + esc(t('res.review')) + '</h2><div class="chips">' +
     '<button class="chip" id="flt-wrong" data-act="filter" data-f="wrong" aria-pressed="' + (S.resFilter !== 'all') + '">' + esc(t('res.wrong', {n:wrong.length})) + '</button>' +
     '<button class="chip" id="flt-all" data-act="filter" data-f="all" aria-pressed="' + (S.resFilter === 'all') + '">' + esc(t('res.all', {n:rows.length})) + '</button></div>';
-  h += list.length ? '<ol class="revlist">' + list.map(x => revItem(x.q, x.a, x.num, r.t)).join('') + '</ol>' : '<p class="muted" style="margin-top:12px">' + esc(t('res.allRight')) + '</p>';
+  h += list.length ? '<ol class="revlist">' + list.map(x => revItem(x.q, x.a, x.num, r.t, x.g)).join('') + '</ol>' : '<p class="muted" style="margin-top:12px">' + esc(t('res.allRight')) + '</p>';
   return h + '</section>';
 }
 function vWeak(){
@@ -726,7 +735,7 @@ function chapterAnswers(){
     h.q.forEach((id, i) => {
       const q = BYID.get(id); if (!q) return;
       const a = String(h.a[i] || '').split('').filter(x => x !== '').map(Number);
-      out[q.ch].push({t:h.t, ok:isRight(q, a), first:!seen.has(id), spq});
+      out[q.ch].push({t:h.t, ok:isRight(q, a) && !(h.g && h.g.includes(i)), first:!seen.has(id), spq});
       seen.add(id);
     });
   }
@@ -899,7 +908,9 @@ function goto(i){
 function check(){
   const z = S.ses, i = z.cur, q = BYID.get(z.q[i]);
   if (z.chk[i] || !ready(q, z.ans[i])) return;
-  z.chk[i] = 1; record(q, isRight(q, z.ans[i])); saveSes(); saveProg(false); render();
+  if (!z.guess) z.guess = z.q.map(() => 0);
+  const okNow = isRight(q, z.ans[i]);
+  z.chk[i] = 1; record(q, okNow && !z.guess[i]); if (okNow && z.guess[i]) z.guess[i] = 2; saveSes(); saveProg(false); render();
   const f = document.getElementById('fbk'); if (f) { f.focus({preventScroll:true}); if (f.scrollIntoView) f.scrollIntoView({block:'nearest'}); }
 }
 function askFinish(){
@@ -932,6 +943,16 @@ const ACT = {
   prev(){ goto(S.ses.cur - 1); },
   next(){ goto(S.ses.cur + 1); },
   goto(el){ goto(+el.dataset.i); },
+  guess(){
+    const z = S.ses, i = z.cur, q = BYID.get(z.q[i]);
+    if (!z.guess) z.guess = z.q.map(() => 0);
+    if (z.chk[i]) {
+      if (!isRight(q, z.ans[i]) || z.guess[i] === 2) return;
+      const st = P.s[q.id]; if (st) { st[1]++; st[2] = 0; st[3] = today(); }
+      z.guess[i] = 2; saveSes(); saveProg(false);
+    } else { z.guess[i] = z.guess[i] ? 0 : 1; saveSes(); }
+    render(); const b = document.getElementById('btn-guess'); if (b) b.focus();
+  },
   flag(){ const z = S.ses; z.flag[z.cur] = z.flag[z.cur] ? 0 : 1; saveSes(); render(); const b = document.getElementById('btn-flag'); if (b) b.focus(); },
   check(){ check(); },
   finish(){ askFinish(); },
