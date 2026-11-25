@@ -326,7 +326,7 @@ function saveProg(sync){ store.set(K.prog, P); cloud.dirty = true; if (sync) que
 function trimHistory(){
   P.h.sort((a, b) => a.t - b.t);
   if (P.h.length > 300) P.h = P.h.slice(-300);
-  const cut = P.h.length - 80;
+  const cut = P.h.length - 300;
   for (let i = 0; i < cut; i++) { delete P.h[i].q; delete P.h[i].a; }
 }
 function merge(a, b){
