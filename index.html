@@ -184,6 +184,25 @@ button,input{font:inherit;color:inherit}
 .setrow p{margin-top:6px}
 
 .iobox{width:100%;font:13px/1.4 ui-monospace,Menlo,Consolas,monospace;padding:10px;border:1.5px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);resize:vertical}
+.anhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.anstats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:12px}
+@media (min-width:620px){.anstats{grid-template-columns:repeat(4,1fr)}}
+.anstats div{background:var(--paper);border-radius:10px;padding:8px 10px}
+.anstats b{display:block;font:800 1.25rem/1.1 var(--font-display);font-variant-numeric:tabular-nums}
+.anstats span{font-size:.78rem;color:var(--muted)}
+.annote{margin-top:10px;font-size:.9rem}
+.anchart{display:block;width:100%;height:auto;margin-top:6px}
+.anchart .gl{stroke:var(--line);stroke-width:1}
+.anchart .pl{stroke:var(--ok);stroke-width:1.5;stroke-dasharray:4 4}
+.anchart .ln{fill:none;stroke:var(--brand);stroke-width:2;stroke-linejoin:round}
+.anchart .pt{fill:var(--brand);stroke:var(--surface);stroke-width:2}
+.anchart .hit{fill:transparent}
+.anchart text{fill:var(--muted);font:11px var(--font-body)}
+.prio{list-style:none;padding:0;margin:12px 0 0;display:grid;gap:8px}
+.prio li{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:10px}
+.prio .rk{font:800 1.1rem/1 var(--font-display);color:var(--muted)}
+.miss{margin:8px 0 0;padding-left:18px;font-size:.92rem}
+.miss li{margin-top:4px}
 .modal-bg{position:fixed;inset:0;background:rgba(8,14,24,.58);display:grid;place-items:center;padding:16px;z-index:20}
 .modal{background:var(--surface);border-radius:var(--r);padding:22px;max-width:430px;width:100%;border:1px solid var(--line)}
 .modal h2{margin-bottom:8px}
@@ -202,7 +221,7 @@ const BANK = [["dbe71ed","s",1,"Which of the following is a fundamental principl
 const PAPER = 24, PASS_RATE = 0.75, LIMIT = 45 * 60;
 const QUOTA = {1:1, 2:1, 3:9, 4:7, 5:6};
 const K = {prog:'lituk.v1.progress', set:'lituk.v1.settings', ses:'lituk.v1.session'};
-const HASHV = ['home', 'weak', 'history', 'settings'];
+const HASHV = ['home', 'analysis', 'weak', 'history', 'settings'];
 const Q = BANK.map(b => ({id:b[0], type:b[1], ch:b[2], q:b[3], o:b[4], en:b[5], zh:b[6]}));
 const BYID = new Map(Q.map(q => [q.id, q]));
 const CHN = Q.reduce((m, q) => (m[q.ch] = (m[q.ch] || 0) + 1, m), {});
@@ -216,7 +235,14 @@ const CH = [null,
 const STR = {
 zh:{
  'app.mock':'模擬試', 'tagline':'題庫 {n} 題 · 每份試卷 24 題 · 限時 45 分鐘 · 答對 18 題合格',
- 'nav.label':'頁面', 'nav.home':'主頁', 'nav.weak':'弱項題目', 'nav.history':'成績紀錄', 'nav.settings':'設定',
+ 'nav.label':'頁面', 'nav.home':'主頁', 'nav.weak':'弱項題目', 'nav.history':'成績紀錄', 'nav.settings':'設定', 'nav.analysis':'分析',
+ 'an.title':'各章分析', 'an.desc':'根據你所有已交卷試卷的作答計算，包括模擬試卷、弱項練習卷和分章練習。', 'an.empty':'未有足夠紀錄。先做幾份試卷，這裏就會顯示分析。',
+ 'an.pred':'預計模擬試卷分數', 'an.predNote':'按每份模擬試卷各章題數（第 1、2 章各 1 題，第 3 章 9 題，第 4 章 7 題，第 5 章 6 題）乘以各章最近正確率計算，只供參考。',
+ 'an.prio':'溫習優先次序', 'an.prioNote':'按每份模擬試卷預計失分由多到少排列。', 'an.lose':'每份卷預計失 {n} 分', 'an.unseen':'仍有 {n} 題未做過',
+ 'an.overall':'整體正確率', 'an.recent':'最近 {n} 題', 'an.coverage':'已做', 'an.weak':'弱項', 'an.answers':'共作答 {n} 次',
+ 'an.up':'最近比整體高 {n} 個百分點，正在進步', 'an.down':'最近比整體低 {n} 個百分點，要留意', 'an.flat':'最近同整體差不多', 'an.few':'數據不足，再做多啲題目先準確',
+ 'an.trend':'每日正確率', 'an.trendNote':'虛線為 75% 合格水平。只計算當日作答 3 次或以上的日子。把滑鼠移到點上可看當日數字。', 'an.oneDay':'只有一日的數據，未能顯示走勢。',
+ 'an.miss':'錯得最多的題目', 'an.missNone':'這章未有答錯過的題目。', 'an.missStat':'錯 {w} / {s} 次', 'an.chart':'第 {n} 章每日正確率：{s}',
  'resume.title':'你有一份未完成的試卷', 'resume.meta':'{kind} · 已答 {a} / {n} 題', 'resume.go':'繼續作答', 'resume.drop':'放棄', 'resume.expired':'這份試卷的時間已到，按「繼續作答」會即時交卷。',
  'tile.avg':'最近 5 次模擬試卷平均分', 'tile.none':'未有紀錄', 'tile.seen':'已做過的題目', 'tile.mastered':'已掌握（連續答對兩次）', 'tile.weak':'弱項題目',
  'mock.title':'模擬試卷', 'mock.desc':'按各章比例隨機抽 24 題，限時 45 分鐘，答對 18 題（75%）合格。抽題不會偏向錯題，用來判斷真實水平。',
@@ -249,7 +275,14 @@ zh:{
 },
 en:{
  'app.mock':'mock tests', 'tagline':'{n} questions in the bank · 24 per paper · 45 minutes · 18 correct to pass',
- 'nav.label':'Pages', 'nav.home':'Home', 'nav.weak':'Weak spots', 'nav.history':'Results', 'nav.settings':'Settings',
+ 'nav.label':'Pages', 'nav.home':'Home', 'nav.weak':'Weak spots', 'nav.history':'Results', 'nav.settings':'Settings', 'nav.analysis':'Analysis',
+ 'an.title':'Chapter analysis', 'an.desc':'Based on every answer in your submitted papers: mock exams, weak-spot practice and chapter practice.', 'an.empty':'Not enough results yet. Take a few papers and the analysis will appear here.',
+ 'an.pred':'Predicted mock exam score', 'an.predNote':'Each chapter\'s questions per mock paper (1, 1, 9, 7 and 6 for chapters 1 to 5) multiplied by your recent accuracy in that chapter. A guide only.',
+ 'an.prio':'Revision priority', 'an.prioNote':'Ordered by the marks you are expected to lose per mock paper.', 'an.lose':'About {n} marks lost per paper', 'an.unseen':'{n} questions not yet seen',
+ 'an.overall':'Overall accuracy', 'an.recent':'Last {n} answers', 'an.coverage':'Seen', 'an.weak':'Weak spots', 'an.answers':'{n} answers in total',
+ 'an.up':'Recent accuracy is {n} points above overall: improving', 'an.down':'Recent accuracy is {n} points below overall: watch this', 'an.flat':'Recent accuracy is close to overall', 'an.few':'Too few answers to be reliable yet',
+ 'an.trend':'Accuracy by day', 'an.trendNote':'The dashed line is the 75% pass level. Only days with at least 3 answers are shown. Hover over a point to see that day\'s figures.', 'an.oneDay':'Only one day of data so far, so there is no trend yet.',
+ 'an.miss':'Most-missed questions', 'an.missNone':'No wrong answers in this chapter yet.', 'an.missStat':'Wrong {w} of {s} times', 'an.chart':'Chapter {n} accuracy by day: {s}',
  'resume.title':'You have an unfinished paper', 'resume.meta':'{kind} · {a} of {n} answered', 'resume.go':'Continue', 'resume.drop':'Discard', 'resume.expired':'Time has run out on this paper. Choosing Continue will submit it straight away.',
  'tile.avg':'Average of last 5 mock exams', 'tile.none':'No results yet', 'tile.seen':'Questions attempted', 'tile.mastered':'Mastered (right twice in a row)', 'tile.weak':'Weak-spot questions',
  'mock.title':'Mock exam', 'mock.desc':'24 questions drawn at random in proportion to each chapter, 45 minutes, 18 correct (75%) to pass. The draw is not tilted towards your mistakes, so it shows your real level.',
@@ -669,6 +702,73 @@ function radios(name, cur, opts){
   return '<div class="seg" role="radiogroup" aria-labelledby="lbl-' + name + '">' + opts.map(o =>
     '<label><input type="radio" name="set-' + name + '" id="set-' + name + '-' + o[0] + '" value="' + o[0] + '" data-set="' + name + '"' + (String(cur) === String(o[0]) ? ' checked' : '') + '><span>' + esc(o[1]) + '</span></label>').join('') + '</div>';
 }
+function chapterAnswers(){
+  const out = {1:[], 2:[], 3:[], 4:[], 5:[]};
+  for (const h of P.h.slice().sort((a, b) => a.t - b.t)) {
+    if (!h.q || !h.a) continue;
+    h.q.forEach((id, i) => {
+      const q = BYID.get(id); if (!q) return;
+      const a = String(h.a[i] || '').split('').filter(x => x !== '').map(Number);
+      out[q.ch].push({t:h.t, ok:isRight(q, a)});
+    });
+  }
+  return out;
+}
+const pct = x => Math.round(x * 100);
+function dayKey(t){ const d = new Date(t); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function dayLabel(k){ const p = k.split('-'); return S.set.lang === 'en' ? (+p[2]) + '/' + (+p[1]) : (+p[1]) + '月' + (+p[2]) + '日'; }
+function trendSVG(ch, rows){
+  const by = new Map();
+  for (const r of rows) { const k = dayKey(r.t); const v = by.get(k) || [0, 0]; v[0] += r.ok ? 1 : 0; v[1]++; by.set(k, v); }
+  const days = Array.from(by.keys()).filter(k => by.get(k)[1] >= 3).sort();
+  if (days.length < 2) return '<p class="muted small" style="margin-top:6px">' + esc(t('an.oneDay')) + '</p>';
+  const W = 320, H = 130, L = 34, R = 10, T = 10, B = 22;
+  const x = i => L + i * (W - L - R) / (days.length - 1), y = v => T + (1 - v) * (H - T - B);
+  const pts = days.map((k, i) => { const v = by.get(k); return {k, i, c:v[0], n:v[1], r:v[0] / v[1]}; });
+  let g = '';
+  for (const v of [0, .5, 1]) g += '<line class="gl" x1="' + L + '" x2="' + (W - R) + '" y1="' + y(v) + '" y2="' + y(v) + '"/><text x="' + (L - 6) + '" y="' + (y(v) + 4) + '" text-anchor="end">' + pct(v) + '%</text>';
+  g += '<line class="pl" x1="' + L + '" x2="' + (W - R) + '" y1="' + y(.75) + '" y2="' + y(.75) + '"/>';
+  g += '<text x="' + L + '" y="' + (H - 6) + '">' + esc(dayLabel(days[0])) + '</text><text x="' + (W - R) + '" y="' + (H - 6) + '" text-anchor="end">' + esc(dayLabel(days[days.length - 1])) + '</text>';
+  g += '<polyline class="ln" points="' + pts.map(p => x(p.i).toFixed(1) + ',' + y(p.r).toFixed(1)).join(' ') + '"/>';
+  for (const p of pts) {
+    const tip = dayLabel(p.k) + '：' + p.c + ' / ' + p.n + '（' + pct(p.r) + '%）';
+    g += '<g><title>' + esc(tip) + '</title><circle class="hit" cx="' + x(p.i).toFixed(1) + '" cy="' + y(p.r).toFixed(1) + '" r="12"/><circle class="pt" cx="' + x(p.i).toFixed(1) + '" cy="' + y(p.r).toFixed(1) + '" r="4.5"/></g>';
+  }
+  const aria = t('an.chart', {n:ch, s:pts.map(p => dayLabel(p.k) + ' ' + pct(p.r) + '%').join(', ')});
+  return '<svg class="anchart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(aria) + '">' + g + '</svg>';
+}
+function vAnalysis(){
+  const A = chapterAnswers(), total = Object.values(A).reduce((s, r) => s + r.length, 0);
+  let h = mast() + '<section class="card"><h2>' + esc(t('an.title')) + '</h2><p class="muted">' + esc(t('an.desc')) + '</p></section>';
+  if (!total) return h + '<section class="card"><p>' + esc(t('an.empty')) + '</p></section>' + footHTML();
+  const info = {};
+  for (let ch = 1; ch <= 5; ch++) {
+    const rows = A[ch], n = rows.length, recentN = Math.min(40, n), recent = rows.slice(-recentN);
+    const all = n ? rows.filter(r => r.ok).length / n : 0, rec = recentN ? recent.filter(r => r.ok).length / recentN : 0;
+    const pool = Q.filter(q => q.ch === ch);
+    info[ch] = {n, all, rec, recentN, lose:QUOTA[ch] * (1 - rec), unseen:pool.filter(q => !P.s[q.id]).length, seen:pool.length - pool.filter(q => !P.s[q.id]).length, size:pool.length, weak:pool.filter(isWeak).length};
+  }
+  const pred = [1, 2, 3, 4, 5].reduce((s, ch) => s + QUOTA[ch] * info[ch].rec, 0);
+  h += '<section class="card paper"><h2>' + esc(t('an.pred')) + '</h2><div class="score" style="margin-top:8px"><div class="big">' + (Math.round(pred * 10) / 10) + '<small> / 24</small></div>' +
+    '<div class="stamp ' + (pred >= 18 ? 'pass' : 'fail') + '">' + esc(t(pred >= 18 ? 'res.pass' : 'res.fail')) + '</div></div><p class="muted small" style="margin-top:10px">' + esc(t('an.predNote')) + '</p></section>';
+  const order = [1, 2, 3, 4, 5].sort((a, b) => info[b].lose - info[a].lose);
+  h += '<section class="card"><h2>' + esc(t('an.prio')) + '</h2><p class="muted small">' + esc(t('an.prioNote')) + '</p><ol class="prio">' + order.map((ch, i) =>
+    '<li><span class="rk">' + (i + 1) + '</span><span><b>' + ch + '. ' + esc(chName(ch)) + '</b><br>' + esc(t('an.lose', {n:(Math.round(info[ch].lose * 10) / 10)})) + '<br><span class="muted small">' + esc(t('an.unseen', {n:info[ch].unseen})) + '</span></span></li>').join('') + '</ol></section>';
+  for (let ch = 1; ch <= 5; ch++) {
+    const I = info[ch], diff = pct(I.rec) - pct(I.all);
+    const note = I.n < 15 ? t('an.few') : diff >= 5 ? t('an.up', {n:diff}) : diff <= -5 ? t('an.down', {n:-diff}) : t('an.flat');
+    const miss = Q.filter(q => q.ch === ch && isWeak(q)).sort((a, b) => P.s[b.id][1] - P.s[a.id][1] || P.s[b.id][0] - P.s[a.id][0]).slice(0, 3);
+    h += '<section class="card"><div class="anhead"><h2>' + ch + '. ' + esc(CH[ch].en) + '</h2>' + (S.set.lang === 'zh' ? '<span class="muted small" lang="zh-HK">' + esc(CH[ch].zh) + '</span>' : '') + '</div>' +
+      '<div class="anstats"><div><b>' + (I.n ? pct(I.all) + '%' : '–') + '</b><span>' + esc(t('an.overall')) + '</span></div>' +
+      '<div><b>' + (I.recentN ? pct(I.rec) + '%' : '–') + '</b><span>' + esc(t('an.recent', {n:I.recentN})) + '</span></div>' +
+      '<div><b>' + I.seen + '<small class="muted" style="font-size:.6em"> / ' + I.size + '</small></b><span>' + esc(t('an.coverage')) + '</span></div>' +
+      '<div><b>' + I.weak + '</b><span>' + esc(t('an.weak')) + '</span></div></div>' +
+      '<p class="annote">' + esc(note) + ' <span class="muted small">' + esc(t('an.answers', {n:I.n})) + '</span></p>' +
+      '<h3 style="margin-top:14px">' + esc(t('an.trend')) + '</h3>' + trendSVG(ch, A[ch]) + '<p class="muted small">' + esc(t('an.trendNote')) + '</p>' +
+      '<h3 style="margin-top:14px">' + esc(t('an.miss')) + '</h3>' + (miss.length ? '<ol class="miss">' + miss.map(q => '<li><span lang="en-GB">' + esc(q.q) + '</span> <span class="muted small">' + esc(t('an.missStat', {w:P.s[q.id][1], s:P.s[q.id][0]})) + '</span></li>').join('') + '</ol>' : '<p class="muted small">' + esc(t('an.missNone')) + '</p>') + '</section>';
+  }
+  return h + footHTML();
+}
 function vSettings(){
   return mast() + '<section class="card"><h2>' + esc(t('set.title')) + '</h2>' +
     '<div class="setrow"><span class="lbl" id="lbl-lang">' + esc(t('set.lang')) + '</span>' + radios('lang', S.set.lang, [['zh', '中文'], ['en', 'English']]) + '</div>' +
@@ -691,7 +791,7 @@ function render(){
   document.documentElement.lang = uiLang();
   if (S.view === 'test' && !S.ses) S.view = 'home';
   if (S.view === 'result' && !S.res) S.view = 'home';
-  app.innerHTML = S.view === 'test' ? vTest() : S.view === 'result' ? vResult() : S.view === 'weak' ? vWeak() : S.view === 'history' ? vHistory() : S.view === 'settings' ? vSettings() : vHome();
+  app.innerHTML = S.view === 'test' ? vTest() : S.view === 'result' ? vResult() : S.view === 'weak' ? vWeak() : S.view === 'history' ? vHistory() : S.view === 'analysis' ? vAnalysis() : S.view === 'settings' ? vSettings() : vHome();
 }
 function show(v){
   S.view = v;
