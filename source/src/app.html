@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Life in the UK 模擬試</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,500..800&display=swap" rel="stylesheet">
+<style>
+/* Layout: one centred column (max 760px) on a cool paper ground. Cards hold each task;
+   "paper" cards carry a red margin rule like a ruled exam sheet. The test view has a sticky
+   bar (leave, position, timer, finish) above a single question card and a number grid. */
+:root{
+  --paper:#eef1f5; --surface:#ffffff; --ink:#111c2e; --muted:#566579; --line:#d3dae4;
+  --brand:#1b3a73; --brand-ink:#ffffff; --accent:#c4122f; --ok:#177245;
+  --tint:color-mix(in srgb,var(--brand) 9%,var(--surface));
+  --ok-tint:color-mix(in srgb,var(--ok) 13%,var(--surface));
+  --bad-tint:color-mix(in srgb,var(--accent) 10%,var(--surface));
+  --font-display:"Bricolage Grotesque","PingFang HK","Noto Sans HK","Microsoft JhengHei",system-ui,sans-serif;
+  --font-body:"Atkinson Hyperlegible","PingFang HK","Noto Sans HK","Microsoft JhengHei",system-ui,sans-serif;
+  --r:14px;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#0c131f; --surface:#151f30; --ink:#e9eef7; --muted:#9aa9be; --line:#2a3850;
+    --brand:#9dbcff; --brand-ink:#0c131f; --accent:#ff7085; --ok:#5fd39a;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0c131f; --surface:#151f30; --ink:#e9eef7; --muted:#9aa9be; --line:#2a3850;
+  --brand:#9dbcff; --brand-ink:#0c131f; --accent:#ff7085; --ok:#5fd39a;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 17px/1.55 var(--font-body);-webkit-text-size-adjust:100%}
+h1,h2,h3{font-family:var(--font-display);line-height:1.2;margin:0}
+h2{font-size:1.3rem;font-weight:800}
+h3{font-size:1.05rem;font-weight:700}
+p{margin:0}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--brand);outline-offset:2px;border-radius:6px}
+.wrap{max-width:760px;margin:0 auto;padding:18px 16px 56px}
+.muted{color:var(--muted)}
+.small{font-size:.88rem}
+
+.mast{margin:6px 0 12px}
+.mast h1{font-size:clamp(1.7rem,6vw,2.4rem);font-weight:800;letter-spacing:-.02em}
+.mast h1 span{color:var(--accent)}
+.sub{color:var(--muted);margin-top:4px;font-size:.92rem}
+.nav{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 16px}
+.nav a{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:6px 14px;border-radius:999px;border:1.5px solid var(--line);
+  background:var(--surface);color:var(--ink);text-decoration:none;font-weight:700;font-size:.92rem}
+.nav a[aria-current="page"]{background:var(--brand);border-color:var(--brand);color:var(--brand-ink)}
+.nav b{font-variant-numeric:tabular-nums;font-size:.8rem;padding:0 7px;border-radius:999px;background:var(--accent);color:var(--surface)}
+.nav a[aria-current="page"] b{background:var(--brand-ink);color:var(--brand)}
+
+.tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:0 0 14px}
+@media (min-width:620px){.tiles{grid-template-columns:repeat(4,1fr)}}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
+.tile b{display:block;font:800 1.65rem/1.1 var(--font-display);font-variant-numeric:tabular-nums}
+.tile b small{font-size:.55em;color:var(--muted);font-weight:600}
+.tile span{color:var(--muted);font-size:.84rem;line-height:1.3;display:block;margin-top:3px}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;margin:0 0 14px}
+.card > h2 + p,.card > h3 + p{margin-top:6px}
+.paper{position:relative;padding-left:32px}
+.paper::before{content:"";position:absolute;left:15px;top:14px;bottom:14px;width:2px;background:var(--accent);opacity:.6;border-radius:2px}
+.banner{border-color:var(--brand);background:var(--tint)}
+.cardfoot{display:flex;gap:12px 16px;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;margin-top:14px}
+.lbl{display:block;font-size:.8rem;color:var(--muted);font-weight:700;margin-bottom:5px}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:9px 20px;border-radius:999px;
+  border:1.5px solid var(--brand);background:var(--brand);color:var(--brand-ink);font-weight:700;cursor:pointer;text-decoration:none}
+.btn:hover{filter:brightness(1.1)}
+.btn[disabled]{opacity:.45;cursor:not-allowed;filter:none}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn.ghost:hover{border-color:var(--brand);filter:none}
+.btn.danger{background:var(--accent);border-color:var(--accent);color:var(--brand-ink)}
+.btn.sm{min-height:38px;padding:5px 14px;font-size:.9rem}
+.btn.on{border-color:var(--accent);color:var(--accent)}
+
+.seg{display:inline-flex;border:1.5px solid var(--line);border-radius:999px;padding:3px;background:var(--paper);flex-wrap:wrap}
+.seg label{position:relative;cursor:pointer}
+.seg input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
+.seg span{display:block;padding:6px 13px;border-radius:999px;font-size:.88rem;font-weight:700;color:var(--muted)}
+.seg input:checked + span{background:var(--surface);color:var(--ink);box-shadow:0 0 0 1.5px var(--brand) inset}
+.seg input:focus-visible + span{outline:3px solid var(--brand);outline-offset:2px}
+
+.chlist{display:grid;gap:14px;margin-top:14px}
+.chrow{display:grid;grid-template-columns:1fr auto;gap:6px 12px;align-items:center}
+.chrow b{display:block;line-height:1.3}
+.chrow small{display:block;color:var(--muted);font-size:.84rem}
+.meter{grid-column:1/-1;display:flex;height:8px;border-radius:4px;background:var(--line);overflow:hidden}
+.meter i{display:block;height:100%;background:var(--brand);opacity:.45}
+.meter i.m{background:var(--ok);opacity:1}
+.meter i.x{background:var(--accent);opacity:1}
+
+.spark{display:block;width:100%;height:auto;margin-top:10px}
+.spark .passline{stroke:var(--ok);stroke-width:1;stroke-dasharray:4 4}
+.spark .tl{fill:none;stroke:var(--brand);stroke-width:2;stroke-linejoin:round}
+.spark .p{fill:var(--ok)} .spark .f{fill:var(--accent)}
+
+.foot{color:var(--muted);font-size:.82rem;margin-top:22px;display:grid;gap:8px}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--muted);margin-right:6px}
+.dot.ok{background:var(--ok)}
+
+/* test */
+.tbar{position:sticky;top:0;z-index:5;background:var(--paper);padding:10px 0 8px;display:grid;grid-template-columns:auto 1fr auto auto;align-items:center;gap:8px}
+.where{text-align:center;font-weight:700;line-height:1.25}
+.where small{display:block;color:var(--muted);font-weight:400;font-size:.78rem}
+.timer{font:800 1.15rem/1 var(--font-display);font-variant-numeric:tabular-nums;padding:8px 10px;border-radius:10px;background:var(--surface);border:1.5px solid var(--line)}
+.timer.low{color:var(--accent);border-color:var(--accent)}
+.bar{height:5px;background:var(--line);border-radius:3px;overflow:hidden;margin:0 0 14px}
+.bar i{display:block;height:100%;background:var(--brand);transition:width .2s}
+.kicker{color:var(--muted);font-size:.8rem;letter-spacing:.04em;margin:0 0 6px}
+.qtext{font:700 1.3rem/1.35 var(--font-display)}
+.qtext.sm{font-size:1.05rem}
+.hint{color:var(--muted);font-size:.9rem;margin-top:8px}
+.hint.flash{color:var(--accent);font-weight:700}
+.opts{display:grid;gap:10px;border:0;padding:0;margin:16px 0 0;min-width:0}
+.opt{display:flex;align-items:flex-start;gap:12px;padding:13px 15px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);cursor:pointer}
+.opt input{flex:none;width:22px;height:22px;margin:2px 0 0;accent-color:var(--brand)}
+.opt .otext{flex:1;min-width:0}
+.opt.sel{border-color:var(--brand);background:var(--tint)}
+.opt.right{border-color:var(--ok);background:var(--ok-tint)}
+.opt.wrong{border-color:var(--accent);background:var(--bad-tint)}
+.opt.locked{cursor:default}
+.mark{flex:none;font-size:.76rem;font-weight:700;padding:2px 9px;border-radius:999px;align-self:center;white-space:nowrap}
+.mark.ok{background:var(--ok);color:var(--surface)}
+.mark.bad{background:var(--accent);color:var(--surface)}
+.fbk{margin-top:14px;padding:14px 16px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface)}
+.fbk.ok{border-color:var(--ok)} .fbk.bad{border-color:var(--accent)}
+.verdict{font:800 1.1rem/1.2 var(--font-display);margin-bottom:6px}
+.fbk.ok .verdict{color:var(--ok)} .fbk.bad .verdict{color:var(--accent)}
+.exp .zh{border-top:1px dashed var(--line);padding-top:7px;margin-top:7px}
+.acts{display:flex;gap:10px;align-items:center;margin-top:18px;flex-wrap:wrap}
+.acts .sp{flex:1}
+.gridbox{margin-top:22px}
+.grid{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;margin-top:8px}
+@media (min-width:620px){.grid{grid-template-columns:repeat(12,1fr)}}
+.cell{aspect-ratio:1;min-height:36px;border:1.5px solid var(--line);border-radius:9px;background:var(--surface);font-weight:700;cursor:pointer;position:relative;font-variant-numeric:tabular-nums;padding:0}
+.cell.ans{background:var(--tint);border-color:var(--brand)}
+.cell.r{background:var(--ok-tint);border-color:var(--ok)}
+.cell.w{background:var(--bad-tint);border-color:var(--accent)}
+.cell.cur{box-shadow:0 0 0 3px var(--brand)}
+.cell.flag::after{content:"";position:absolute;top:3px;right:3px;width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:.8rem;margin-top:10px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:4px;border:1.5px solid var(--line);vertical-align:-1px;margin-right:5px}
+.legend i.a{background:var(--tint);border-color:var(--brand)}
+.legend i.f{background:var(--accent);border-color:var(--accent);border-radius:50%}
+
+/* results */
+.score{display:flex;align-items:center;gap:14px 22px;flex-wrap:wrap}
+.big{font:800 clamp(3rem,15vw,4.6rem)/1 var(--font-display);font-variant-numeric:tabular-nums;letter-spacing:-.03em}
+.big small{font-size:.42em;color:var(--muted);font-weight:600;letter-spacing:0}
+.stamp{display:inline-block;padding:7px 16px;border:3px double currentColor;border-radius:8px;font:800 1.25rem/1.15 var(--font-display);letter-spacing:.08em;transform:rotate(-6deg);text-align:center}
+.stamp.pass{color:var(--ok)} .stamp.fail{color:var(--accent)}
+.meta{color:var(--muted);font-size:.9rem;margin-top:12px;display:flex;gap:4px 16px;flex-wrap:wrap}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.chip{min-height:38px;padding:5px 14px;border-radius:999px;border:1.5px solid var(--line);background:var(--surface);font-weight:700;font-size:.88rem;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:var(--brand-ink)}
+.revlist{list-style:none;padding:0;margin:14px 0 0;display:grid;gap:12px}
+.rev{border:1px solid var(--line);border-left:4px solid var(--line);border-radius:12px;padding:14px;background:var(--surface)}
+.rev.ok{border-left-color:var(--ok)} .rev.bad{border-left-color:var(--accent)}
+.revhead{display:flex;gap:6px 12px;align-items:center;flex-wrap:wrap;font-size:.82rem;color:var(--muted);margin-bottom:6px}
+.tag{font-weight:700}
+.rev.ok .tag{color:var(--ok)} .rev.bad .tag{color:var(--accent)}
+.ropts{list-style:none;padding:0;margin:10px 0;display:grid;gap:6px}
+.ropts li{padding:8px 12px;border-radius:9px;border:1px solid var(--line);display:flex;gap:10px;justify-content:space-between;align-items:center}
+.ropts li.right{border-color:var(--ok);background:var(--ok-tint)}
+.ropts li.wrong{border-color:var(--accent);background:var(--bad-tint)}
+.hrow{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.hrow:last-child{border-bottom:0}
+.hrow b{font-variant-numeric:tabular-nums}
+.pill{font-size:.76rem;font-weight:700;padding:2px 9px;border-radius:999px;border:1.5px solid currentColor;white-space:nowrap}
+.pill.pass{color:var(--ok)} .pill.fail{color:var(--accent)}
+.setrow{padding:14px 0;border-bottom:1px solid var(--line)}
+.setrow:first-of-type{padding-top:4px}
+.setrow:last-child{border-bottom:0;padding-bottom:0}
+.setrow p{margin-top:6px}
+
+.iobox{width:100%;font:13px/1.4 ui-monospace,Menlo,Consolas,monospace;padding:10px;border:1.5px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);resize:vertical}
+.anhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.anstats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:12px}
+@media (min-width:620px){.anstats{grid-template-columns:repeat(4,1fr)}}
+.anstats div{background:var(--paper);border-radius:10px;padding:8px 10px}
+.anstats b{display:block;font:800 1.25rem/1.1 var(--font-display);font-variant-numeric:tabular-nums}
+.anstats span{font-size:.78rem;color:var(--muted)}
+.annote{margin-top:10px;font-size:.9rem}
+.anchart{display:block;width:100%;height:auto;margin-top:6px}
+.anchart .gl{stroke:var(--line);stroke-width:1}
+.anchart .pl{stroke:var(--ok);stroke-width:1.5;stroke-dasharray:4 4}
+.anchart .ln{fill:none;stroke:var(--brand);stroke-width:2;stroke-linejoin:round}
+.anchart .pt{fill:var(--brand);stroke:var(--surface);stroke-width:2}
+.anchart .hit{fill:transparent}
+.anchart text{fill:var(--muted);font:11px var(--font-body)}
+.prio{list-style:none;padding:0;margin:12px 0 0;display:grid;gap:8px}
+.prio li{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:10px}
+.prio .rk{font:800 1.1rem/1 var(--font-display);color:var(--muted)}
+.miss{margin:8px 0 0;padding-left:18px;font-size:.92rem}
+.miss li{margin-top:4px}
+.tmbar .tb{fill:var(--brand)}
+.tmbar .hit{fill:transparent}
+.tmbar text{fill:var(--muted);font:11px var(--font-body)}
+.tmbar .gl{stroke:var(--line);stroke-width:1}
+.tmch{display:grid;grid-template-columns:1fr auto;gap:4px 12px;margin-top:8px;font-size:.92rem}
+.modal-bg{position:fixed;inset:0;background:rgba(8,14,24,.58);display:grid;place-items:center;padding:16px;z-index:20}
+.modal{background:var(--surface);border-radius:var(--r);padding:22px;max-width:430px;width:100%;border:1px solid var(--line)}
+.modal h2{margin-bottom:8px}
+.modal p{margin-bottom:18px;color:var(--muted)}
+.row{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div id="app" class="wrap"></div>
+<div id="modal-root"></div>
+<script>
+(() => {
+'use strict';
+const BANK = /*__BANK__*/[];
+const PAPER = 24, PASS_RATE = 0.75, LIMIT = 45 * 60;
+const QUOTA = {1:1, 2:1, 3:9, 4:7, 5:6};
+const K = {prog:'lituk.v1.progress', set:'lituk.v1.settings', ses:'lituk.v1.session'};
+const HASHV = ['home', 'analysis', 'weak', 'history', 'settings'];
+const Q = BANK.map(b => ({id:b[0], type:b[1], ch:b[2], q:b[3], o:b[4], en:b[5], zh:b[6]}));
+const BYID = new Map(Q.map(q => [q.id, q]));
+const CHN = Q.reduce((m, q) => (m[q.ch] = (m[q.ch] || 0) + 1, m), {});
+const CH = [null,
+  {en:'The values and principles of the UK', zh:'英國的價值與原則'},
+  {en:'What is the UK?', zh:'英國是甚麼'},
+  {en:'A long and illustrious history', zh:'悠久而輝煌的歷史'},
+  {en:'A modern, thriving society', zh:'現代而繁榮的社會'},
+  {en:'The UK government, the law and your role', zh:'英國政府、法律與你的角色'}];
+
+const STR = {
+zh:{
+ 'app.mock':'模擬試', 'tagline':'題庫 {n} 題 · 每份試卷 24 題 · 限時 45 分鐘 · 答對 18 題合格',
+ 'nav.label':'頁面', 'nav.home':'主頁', 'nav.weak':'弱項題目', 'nav.history':'成績紀錄', 'nav.settings':'設定', 'nav.analysis':'分析',
+ 'an.title':'各章分析', 'an.desc':'根據你所有已交卷試卷的作答計算，包括模擬試卷、弱項練習卷和分章練習。', 'an.empty':'未有足夠紀錄。先做幾份試卷，這裏就會顯示分析。',
+ 'an.pred':'預計模擬試卷分數', 'an.predNote':'按每份模擬試卷各章題數（第 1、2 章各 1 題，第 3 章 9 題，第 4 章 7 題，第 5 章 6 題）乘以各章最近正確率計算，只供參考。',
+ 'an.prio':'溫習優先次序', 'an.prioNote':'按每份模擬試卷預計失分由多到少排列。', 'an.lose':'每份卷預計失 {n} 分', 'an.unseen':'仍有 {n} 題未做過',
+ 'an.overall':'整體正確率', 'an.recent':'最近 {n} 題', 'an.coverage':'已做', 'an.weak':'弱項', 'an.answers':'共作答 {n} 次',
+ 'an.up':'最近比整體高 {n} 個百分點，正在進步', 'an.down':'最近比整體低 {n} 個百分點，要留意', 'an.flat':'最近同整體差不多', 'an.few':'數據不足，再做多啲題目先準確',
+ 'an.trend':'每日正確率', 'an.trendNote':'虛線為 75% 合格水平。只計算當日作答 3 次或以上的日子。把滑鼠移到點上可看當日數字。', 'an.oneDay':'只有一日的數據，未能顯示走勢。',
+ 'an.miss':'錯得最多的題目', 'an.missNone':'這章未有答錯過的題目。', 'an.missStat':'錯 {w} / {s} 次', 'an.chart':'第 {n} 章每日正確率：{s}',
+ 'an.first':'第一次作答正確率', 'an.repeat':'重做正確率', 'an.est':'預計真試正確率 {p}%（目標 {g}%）', 'an.met':'已達目標，保持重溫弱項就可以。',
+ 'an.need':'預計仲要第一次做約 {q} 題新題目，連重溫大約 {a} 至 {b} 分鐘（約 {pa} 至 {pb} 份分章練習）。', 'an.notes':'即使做晒這章所有題目都未必夠，建議配合溫習筆記。',
+ 'an.lockAcc':'這章再作答 {n} 次就會顯示正確率。', 'an.lockPred':'再做 {n} 份模擬試卷就會顯示預計分數。', 'an.lockTime':'{parts}就會顯示所需時間。',
+ 'an.lockPapers':'再交 {n} 份試卷', 'an.lockFirst':'在這章再第一次作答 {n} 題', 'an.and':'，同埋',
+ 'an.total':'合共預計仲要做題 {a} 至 {b} 分鐘（未計溫筆記時間）。', 'an.allMet':'所有已有估算的章節都已達目標。',
+ 'an.predNote2':'按每份模擬試卷各章題數（第 1、2 章各 1 題，第 3 章 9 題，第 4 章 7 題，第 5 章 6 題）乘以各章預計真試正確率計算。預計真試正確率＝做過的題目按重做正確率計，未做過的按第一次作答正確率計。只供參考。',
+ 'an.howTitle':'時間點樣估算', 'an.how':'真試題目對你來說等於新題目。做過並重溫過的題目，你通常答得好（重做正確率）；未見過的題目則較差（第一次作答正確率）。每多做一條新題目，預計真試正確率就會上升少少。程式按你自己的作答速度，計算要做多少新題目（每條另加一次重溫）才達到目標，並以範圍顯示。',
+ 'an.prio2':'每份卷預計失 {n} 分',
+ 'tm.title':'溫習時間', 'tm.total':'做題時間', 'tm.answers':'已答題數', 'tm.papers':'已交試卷', 'tm.perQ':'平均每題',
+ 'tm.byCh':'各章用時', 'tm.daily':'最近 14 日每日做題時間', 'tm.min':'{n} 分鐘', 'tm.hm':'{h} 小時 {m} 分鐘', 'tm.sec':'{n} 秒',
+ 'tm.note':'只計已交卷的試卷，不計溫筆記和中途離開的試卷。', 'tm.capNote':'有 {n} 份試卷的平均每題用時超過你平時的 3 倍，相信中途離開過，只按 3 倍計算。', 'tm.capWait':'交滿 5 份試卷後，會自動扣除中途離開的時間。',
+ 'tm.chart':'最近 14 日每日做題分鐘：{s}',
+ 'resume.title':'你有一份未完成的試卷', 'resume.meta':'{kind} · 已答 {a} / {n} 題', 'resume.go':'繼續作答', 'resume.drop':'放棄', 'resume.expired':'這份試卷的時間已到，按「繼續作答」會即時交卷。',
+ 'tile.avg':'最近 5 次模擬試卷平均分', 'tile.none':'未有紀錄', 'tile.seen':'已做過的題目', 'tile.mastered':'已掌握（連續答對兩次）', 'tile.weak':'弱項題目',
+ 'mock.title':'模擬試卷', 'mock.desc':'按各章比例隨機抽 24 題，限時 45 分鐘，答對 18 題（75%）合格。抽題不會偏向錯題，用來判斷真實水平。',
+ 'weak.title':'弱項練習卷', 'weak.desc':'24 題當中約一半來自你答錯過的題目，其餘以未做過的題目為主。同樣限時 45 分鐘。',
+ 'weak.count':'目前有 {n} 題弱項題目。', 'weak.none':'暫時未有弱項題目，這份試卷會以未做過的題目為主。',
+ 'chap.title':'分章練習', 'chap.desc':'每次從所選章節抽最多 24 題，不計時，優先抽弱項和未做過的題目。', 'chap.meta':'{n} 題 · 已做 {s} · 已掌握 {m}',
+ 'fb.label':'對答案方式', 'fb.e':'做完才看結果', 'fb.i':'每題即時對答案', 'start':'開始',
+ 'trend.title':'模擬試卷成績走勢', 'trend.pass':'虛線為合格線（18 題）。顯示最近 {n} 次模擬試卷。', 'trend.aria':'最近模擬試卷分數：{s}',
+ 'foot.note':'題目由 Claude 根據官方手冊《Life in the United Kingdom: A Guide for New Residents》的內容編寫，並非真實試題。如有出入，以官方手冊為準。',
+ 'sync.ok':'進度已同步到你的 Claude 帳戶', 'sync.local':'進度只儲存在這部裝置的瀏覽器', 'sync.connecting':'正在連接雲端儲存…', 'sync.retry':'暫時未能同步，稍後會再試',
+ 'test.q':'第 {i} / {n} 題', 'test.quit':'離開', 'test.finish':'交卷', 'test.prev':'上一題', 'test.next':'下一題', 'test.skip':'先跳過', 'test.check':'對答案',
+ 'test.flag':'標記', 'test.flagged':'已標記', 'test.guess':'我係估嘅', 'test.guessOn':'已標記估中', 'test.guessed':'已當作答錯', 'res.guessTag':'估中（當答錯）', 'test.guessHint':'答啱但係估中嘅題目，會當答錯處理，放入弱項清單。', 'test.overview':'題目總覽', 'test.two':'請選擇兩個答案。', 'test.correct':'答對了', 'test.incorrect':'答錯了',
+ 'test.answer':'正確答案', 'test.timer':'剩餘時間', 'lg.ans':'已作答', 'lg.flag':'已標記', 'lg.cur':'粗框為目前題目',
+ 'm.finish.title':'確定交卷？', 'm.finish.un':'還有 {n} 題未作答，未作答的題目會當作答錯。', 'm.finish.all':'所有題目都已作答。', 'm.finish.ok':'交卷', 'm.back':'返回試卷',
+ 'm.quit.title':'離開這份試卷？', 'm.quit.e':'這份試卷的作答不會保留，也不會計入成績紀錄。', 'm.quit.i':'這份試卷不會計入成績紀錄，但已對答案的題目仍會計入題目統計。', 'm.quit.ok':'離開',
+ 'm.new.title':'開始新試卷？', 'm.new.body':'你有一份未完成的試卷，開始新試卷會放棄它。', 'm.new.ok':'開始新試卷', 'm.cancel':'取消',
+ 'm.reset.title':'清除所有進度？', 'm.reset.body':'所有成績紀錄和題目統計都會被刪除，無法復原。', 'm.reset.ok':'清除',
+ 'res.pass':'合格', 'res.fail':'不合格', 'res.need':'合格需要答對 {n} 題', 'res.time':'用時 {t}', 'res.timeout':'時間到，已自動交卷', 'res.byCh':'各章表現',
+ 'res.review':'題目回顧', 'res.wrong':'只看答錯（{n}）', 'res.all':'全部（{n}）', 'res.again':'再做一份', 'res.home':'返回主頁', 'res.yours':'你的答案',
+ 'res.none':'未作答', 'res.right':'答對', 'res.wrongTag':'答錯', 'res.allRight':'全部答對，沒有需要回顧的錯題。', 'res.nodetail':'這次紀錄較舊，沒有保留題目詳情。', 'res.ch':'第 {n} 章',
+ 'wk.title':'弱項題目', 'wk.desc':'答錯過而又未連續答對兩次的題目。連續答對兩次後會自動移出這個清單。', 'wk.empty':'暫時未有弱項題目。先做一份試卷，答錯的題目會出現在這裏。',
+ 'wk.stat':'錯 {w} 次 · 做過 {s} 次', 'wk.all':'全部（{n}）', 'wk.start':'開始弱項練習卷',
+ 'hs.title':'成績紀錄', 'hs.empty':'未有成績紀錄。', 'hs.view':'查看', 'kind.m':'模擬試卷', 'kind.w':'弱項練習卷', 'kind.c':'分章練習',
+ 'set.title':'設定', 'set.lang':'介面語言', 'set.zh':'中文解釋', 'set.zhOn':'顯示', 'set.zhOff':'隱藏', 'set.zhHint':'題目一律以英文顯示；解釋會先顯示英文，再顯示中文。',
+ 'set.theme':'外觀', 'th.auto':'跟隨系統', 'th.light':'淺色', 'th.dark':'深色', 'set.sync':'進度儲存', 'set.reset':'清除所有進度', 'set.resetHint':'刪除所有成績紀錄和題目統計，無法復原。',
+ 'io.title':'匯出／匯入進度', 'io.hint':'匯出會產生一段包含所有成績紀錄和題目統計的文字。匯入會與目前的進度合併，不會刪除任何紀錄。',
+ 'io.export':'匯出', 'io.copy':'複製', 'io.download':'下載檔案', 'io.copied':'已複製，請貼到記事本並儲存。', 'io.copyFail':'未能自動複製，請手動全選文字後複製。',
+ 'io.file':'選擇備份檔案', 'io.paste':'或者貼上備份文字', 'io.import':'匯入', 'io.bad':'看不懂這段文字，請確認是完整的備份。',
+ 'm.imp.title':'匯入並合併進度？', 'm.imp.body':'備份有 {h} 份試卷紀錄（其中 {nh} 份是新的）和 {s} 條題目統計。合併後不會刪除任何現有紀錄。', 'm.imp.ok':'合併', 'io.done':'已合併匯入的進度。'
+},
+en:{
+ 'app.mock':'mock tests', 'tagline':'{n} questions in the bank · 24 per paper · 45 minutes · 18 correct to pass',
+ 'nav.label':'Pages', 'nav.home':'Home', 'nav.weak':'Weak spots', 'nav.history':'Results', 'nav.settings':'Settings', 'nav.analysis':'Analysis',
+ 'an.title':'Chapter analysis', 'an.desc':'Based on every answer in your submitted papers: mock exams, weak-spot practice and chapter practice.', 'an.empty':'Not enough results yet. Take a few papers and the analysis will appear here.',
+ 'an.pred':'Predicted mock exam score', 'an.predNote':'Each chapter\'s questions per mock paper (1, 1, 9, 7 and 6 for chapters 1 to 5) multiplied by your recent accuracy in that chapter. A guide only.',
+ 'an.prio':'Revision priority', 'an.prioNote':'Ordered by the marks you are expected to lose per mock paper.', 'an.lose':'About {n} marks lost per paper', 'an.unseen':'{n} questions not yet seen',
+ 'an.overall':'Overall accuracy', 'an.recent':'Last {n} answers', 'an.coverage':'Seen', 'an.weak':'Weak spots', 'an.answers':'{n} answers in total',
+ 'an.up':'Recent accuracy is {n} points above overall: improving', 'an.down':'Recent accuracy is {n} points below overall: watch this', 'an.flat':'Recent accuracy is close to overall', 'an.few':'Too few answers to be reliable yet',
+ 'an.trend':'Accuracy by day', 'an.trendNote':'The dashed line is the 75% pass level. Only days with at least 3 answers are shown. Hover over a point to see that day\'s figures.', 'an.oneDay':'Only one day of data so far, so there is no trend yet.',
+ 'an.miss':'Most-missed questions', 'an.missNone':'No wrong answers in this chapter yet.', 'an.missStat':'Wrong {w} of {s} times', 'an.chart':'Chapter {n} accuracy by day: {s}',
+ 'an.first':'First-attempt accuracy', 'an.repeat':'Repeat accuracy', 'an.est':'Expected real-test accuracy {p}% (target {g}%)', 'an.met':'Target reached. Keep reviewing your weak spots.',
+ 'an.need':'About {q} more new questions to see for the first time; with reviews, about {a} to {b} minutes (about {pa} to {pb} chapter papers).', 'an.notes':'Even seeing every question in this chapter may not be enough; study the notes as well.',
+ 'an.lockAcc':'Answer {n} more questions in this chapter to see accuracy.', 'an.lockPred':'Take {n} more mock exams to see a predicted score.', 'an.lockTime':'{parts} to see the time needed.',
+ 'an.lockPapers':'Submit {n} more papers', 'an.lockFirst':'answer {n} more new questions in this chapter', 'an.and':' and ',
+ 'an.total':'In total, about {a} to {b} minutes of questions still needed (not counting time with the notes).', 'an.allMet':'Every chapter with an estimate has reached the target.',
+ 'an.predNote2':'Questions per mock paper for each chapter (1, 1, 9, 7 and 6) multiplied by your expected real-test accuracy in that chapter. Questions you have seen count at your repeat accuracy, unseen ones at your first-attempt accuracy. A guide only.',
+ 'an.howTitle':'How the time is estimated', 'an.how':'Real test questions are new to you. You do well on questions you have seen and reviewed (repeat accuracy) and less well on ones you have not (first-attempt accuracy). Each new question you work through nudges your expected accuracy up. Using your own pace, the app works out how many new questions (each with one review) you need to reach the target, shown as a range.',
+ 'an.prio2':'About {n} marks lost per paper',
+ 'tm.title':'Study time', 'tm.total':'Time on questions', 'tm.answers':'Questions answered', 'tm.papers':'Papers submitted', 'tm.perQ':'Average per question',
+ 'tm.byCh':'Time by chapter', 'tm.daily':'Minutes of questions per day, last 14 days', 'tm.min':'{n} min', 'tm.hm':'{h} h {m} min', 'tm.sec':'{n} s',
+ 'tm.note':'Counts submitted papers only; time with the notes and papers you left are not included.', 'tm.capNote':'{n} papers averaged more than 3 times your usual time per question, so you probably stepped away; they are counted at 3 times your usual pace.', 'tm.capWait':'Once you have submitted 5 papers, time spent away from a paper is removed automatically.',
+ 'tm.chart':'Minutes of questions per day over the last 14 days: {s}',
+ 'resume.title':'You have an unfinished paper', 'resume.meta':'{kind} · {a} of {n} answered', 'resume.go':'Continue', 'resume.drop':'Discard', 'resume.expired':'Time has run out on this paper. Choosing Continue will submit it straight away.',
+ 'tile.avg':'Average of last 5 mock exams', 'tile.none':'No results yet', 'tile.seen':'Questions attempted', 'tile.mastered':'Mastered (right twice in a row)', 'tile.weak':'Weak-spot questions',
+ 'mock.title':'Mock exam', 'mock.desc':'24 questions drawn at random in proportion to each chapter, 45 minutes, 18 correct (75%) to pass. The draw is not tilted towards your mistakes, so it shows your real level.',
+ 'weak.title':'Weak-spot practice', 'weak.desc':'About half of the 24 questions come from ones you have got wrong; the rest are mostly questions you have not seen yet. Also 45 minutes.',
+ 'weak.count':'You currently have {n} weak-spot questions.', 'weak.none':'No weak-spot questions yet, so this paper will mostly use questions you have not seen.',
+ 'chap.title':'Chapter practice', 'chap.desc':'Up to 24 questions from one chapter, untimed, favouring weak spots and questions you have not seen.', 'chap.meta':'{n} questions · {s} attempted · {m} mastered',
+ 'fb.label':'Feedback', 'fb.e':'Results at the end', 'fb.i':'After each question', 'start':'Start',
+ 'trend.title':'Mock exam scores', 'trend.pass':'The dashed line is the pass mark (18). Showing the last {n} mock exams.', 'trend.aria':'Recent mock exam scores: {s}',
+ 'foot.note':'Questions were written by Claude from the content of the official handbook, Life in the United Kingdom: A Guide for New Residents. They are not real test questions. Where anything differs, the handbook is right.',
+ 'sync.ok':'Progress is synced to your Claude account', 'sync.local':'Progress is saved only in this browser', 'sync.connecting':'Connecting to cloud storage…', 'sync.retry':'Could not sync just now; will try again',
+ 'test.q':'Question {i} of {n}', 'test.quit':'Leave', 'test.finish':'Finish', 'test.prev':'Previous', 'test.next':'Next', 'test.skip':'Skip for now', 'test.check':'Check answer',
+ 'test.flag':'Flag', 'test.flagged':'Flagged', 'test.guess':'I guessed', 'test.guessOn':'Marked as guess', 'test.guessed':'Counted as wrong', 'res.guessTag':'Guessed (counted wrong)', 'test.guessHint':'A correct answer you guessed is counted as wrong and added to your weak spots.', 'test.overview':'All questions', 'test.two':'Select TWO answers.', 'test.correct':'Correct', 'test.incorrect':'Incorrect',
+ 'test.answer':'Correct answer', 'test.timer':'Time left', 'lg.ans':'Answered', 'lg.flag':'Flagged', 'lg.cur':'Thick outline is the current question',
+ 'm.finish.title':'Finish the test?', 'm.finish.un':'{n} questions are unanswered. Unanswered questions count as wrong.', 'm.finish.all':'You have answered every question.', 'm.finish.ok':'Finish', 'm.back':'Back to test',
+ 'm.quit.title':'Leave this paper?', 'm.quit.e':'Your answers will not be kept and no result will be recorded.', 'm.quit.i':'No result will be recorded, but questions you have already checked still count in your question statistics.', 'm.quit.ok':'Leave',
+ 'm.new.title':'Start a new paper?', 'm.new.body':'You have an unfinished paper. Starting a new one discards it.', 'm.new.ok':'Start new paper', 'm.cancel':'Cancel',
+ 'm.reset.title':'Clear all progress?', 'm.reset.body':'All results and question statistics will be deleted. This cannot be undone.', 'm.reset.ok':'Clear',
+ 'res.pass':'Pass', 'res.fail':'Fail', 'res.need':'{n} correct needed to pass', 'res.time':'Time taken {t}', 'res.timeout':'Time ran out; the paper was submitted automatically', 'res.byCh':'By chapter',
+ 'res.review':'Review', 'res.wrong':'Wrong only ({n})', 'res.all':'All ({n})', 'res.again':'Another paper', 'res.home':'Back to home', 'res.yours':'Your answer',
+ 'res.none':'Not answered', 'res.right':'Correct', 'res.wrongTag':'Incorrect', 'res.allRight':'All correct. Nothing to review.', 'res.nodetail':'This is an older result; the questions were not kept.', 'res.ch':'Chapter {n}',
+ 'wk.title':'Weak spots', 'wk.desc':'Questions you have got wrong and not yet answered correctly twice in a row. They leave this list after two correct answers in a row.', 'wk.empty':'No weak-spot questions yet. Take a paper first; questions you get wrong will appear here.',
+ 'wk.stat':'Wrong {w} times · attempted {s} times', 'wk.all':'All ({n})', 'wk.start':'Start weak-spot practice',
+ 'hs.title':'Results', 'hs.empty':'No results yet.', 'hs.view':'View', 'kind.m':'Mock exam', 'kind.w':'Weak-spot practice', 'kind.c':'Chapter practice',
+ 'set.title':'Settings', 'set.lang':'Interface language', 'set.zh':'Chinese explanations', 'set.zhOn':'Show', 'set.zhOff':'Hide', 'set.zhHint':'Questions are always in English. Explanations appear in English first, then in Chinese.',
+ 'set.theme':'Appearance', 'th.auto':'Match system', 'th.light':'Light', 'th.dark':'Dark', 'set.sync':'Progress storage', 'set.reset':'Clear all progress', 'set.resetHint':'Deletes all results and question statistics. This cannot be undone.',
+ 'io.title':'Export / import progress', 'io.hint':'Export creates text containing all results and question statistics. Import merges with your current progress and never deletes anything.',
+ 'io.export':'Export', 'io.copy':'Copy', 'io.download':'Download file', 'io.copied':'Copied. Paste it into a text file and save it.', 'io.copyFail':'Could not copy automatically. Select all the text and copy it yourself.',
+ 'io.file':'Choose a backup file', 'io.paste':'or paste backup text', 'io.import':'Import', 'io.bad':'This text could not be read. Check that it is a complete backup.',
+ 'm.imp.title':'Import and merge progress?', 'm.imp.body':'The backup has {h} results ({nh} new) and {s} question statistics. Merging never deletes existing records.', 'm.imp.ok':'Merge', 'io.done':'Imported progress has been merged.'
+}};
+
+const S = {view:'home', set:{lang:'zh', zh:true, theme:'auto', fb:{m:'e', w:'i', c:'i'}}, ses:null, res:null, resFilter:'wrong', weakCh:0, sync:'connecting'};
+let P = blank(0);
+const M = {open:false, onOk:null, back:null};
+const app = document.getElementById('app');
+const mroot = document.getElementById('modal-root');
+
+function blank(r){ return {v:1, r:r || 0, s:{}, h:[]}; }
+function t(k, v){
+  let s = (STR[S.set.lang] || STR.zh)[k];
+  if (s == null) s = STR.en[k] != null ? STR.en[k] : k;
+  if (v) for (const x in v) s = s.split('{' + x + '}').join(v[x]);
+  return s;
+}
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[c]));
+const zhOn = () => S.set.zh !== false;
+const uiLang = () => S.set.lang === 'en' ? 'en-GB' : 'zh-HK';
+const chName = ch => S.set.lang === 'en' ? CH[ch].en : CH[ch].zh;
+const fmt = sec => { sec = Math.max(0, sec | 0); return Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0'); };
+const fmtDate = ms => { try { return new Date(ms).toLocaleString(uiLang(), {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'}); } catch (e) { return new Date(ms).toISOString().slice(0, 16).replace('T', ' '); } };
+
+/* ---------- storage ---------- */
+const store = {
+  get(k){ try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch (e) { return null; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+  del(k){ try { localStorage.removeItem(k); } catch (e) {} }
+};
+function valid(p){ return !!p && p.v === 1 && !!p.s && typeof p.s === 'object' && Array.isArray(p.h); }
+function loadLocal(){
+  const s = store.get(K.set);
+  if (s && typeof s === 'object') {
+    if (s.lang === 'en' || s.lang === 'zh') S.set.lang = s.lang;
+    if (typeof s.zh === 'boolean') S.set.zh = s.zh;
+    if (['auto', 'light', 'dark'].includes(s.theme)) S.set.theme = s.theme;
+    if (s.fb) for (const k of ['m', 'w', 'c']) if (s.fb[k] === 'e' || s.fb[k] === 'i') S.set.fb[k] = s.fb[k];
+  }
+  const p = store.get(K.prog); if (valid(p)) P = p;
+  const z = store.get(K.ses);
+  if (z && Array.isArray(z.q) && z.q.length && z.q.every(id => BYID.has(id)) && Array.isArray(z.ans) && z.ans.length === z.q.length) S.ses = z;
+}
+const saveSet = () => store.set(K.set, S.set);
+const saveSes = () => { if (S.ses) store.set(K.ses, S.ses); else store.del(K.ses); };
+function saveProg(sync){ store.set(K.prog, P); cloud.dirty = true; if (sync) queueCloud(300); }
+function trimHistory(){
+  P.h.sort((a, b) => a.t - b.t);
+  if (P.h.length > 300) P.h = P.h.slice(-300);
+  const cut = P.h.length - 300;
+  for (let i = 0; i < cut; i++) { delete P.h[i].q; delete P.h[i].a; }
+}
+function merge(a, b){
+  if ((a.r || 0) !== (b.r || 0)) return JSON.parse(JSON.stringify((a.r || 0) > (b.r || 0) ? a : b));
+  const s = {};
+  for (const id of new Set(Object.keys(a.s).concat(Object.keys(b.s)))) {
+    const x = a.s[id], y = b.s[id];
+    const ok = v => Array.isArray(v) && v.length >= 4;
+    if (!ok(x)) { if (ok(y)) s[id] = y.slice(0, 4); continue; }
+    if (!ok(y)) { s[id] = x.slice(0, 4); continue; }
+    s[id] = (x[0] !== y[0] ? (x[0] > y[0] ? x : y) : (x[3] >= y[3] ? x : y)).slice(0, 4);
+  }
+  const by = new Map();
+  for (const h of a.h.concat(b.h)) {
+    if (!h || typeof h.t !== 'number') continue;
+    const cur = by.get(h.t);
+    if (!cur || (!cur.q && h.q)) by.set(h.t, h);
+  }
+  const out = {v:1, r:a.r || 0, s, h:Array.from(by.values())};
+  const keep = P; P = out; trimHistory(); P = keep;
+  return out;
+}
+
+function sig(p){ return JSON.stringify([p.r || 0, Object.keys(p.s).sort().map(k => [k].concat(p.s[k])), p.h.slice().sort((a, b) => a.t - b.t)]); }
+
+/* ---------- cloud (per-person document, optional) ---------- */
+const cloud = {ref:null, dirty:false, writing:false, timer:null, fails:0, pulled:0};
+function setSync(v){ S.sync = v; const el = document.getElementById('sync'); if (el) el.innerHTML = syncHTML(); }
+function syncHTML(){ return '<span class="dot' + (S.sync === 'ok' ? ' ok' : '') + '"></span>' + esc(t('sync.' + S.sync)); }
+function timeout(p, ms){ return Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(Object.assign(new Error('timeout'), {code:'unavailable'})), ms))]); }
+function snapData(snap){
+  if (!snap) return null;
+  const ex = typeof snap.exists === 'function' ? snap.exists() : snap.exists;
+  if (ex === false) return null;
+  const d = typeof snap.data === 'function' ? snap.data() : snap.data;
+  return valid(d) ? d : null;
+}
+async function initCloud(){
+  try {
+    const c = window.claude;
+    if (!c || typeof c.use !== 'function') { setSync('local'); return; }
+    const pair = await Promise.all([c.use('db'), c.use('user')]);
+    const db = pair[0], user = pair[1];
+    if (!db || !user || typeof user.id !== 'function') { setSync('local'); return; }
+    const id = await user.id();
+    if (!id) { setSync('local'); return; }
+    cloud.ref = db.doc('data/users/' + id + '/progress');
+    await pull();
+  } catch (e) { cloud.ref = null; setSync('local'); }
+}
+async function readRemote(){
+  try { return snapData(await timeout(cloud.ref.get(), 10000)); }
+  catch (e) { if (e && (e.code === 'not_found' || e.code === 'not-found')) return null; throw e; }
+}
+async function pull(){
+  if (!cloud.ref) return;
+  try {
+    const remote = await readRemote();
+    cloud.pulled = Date.now();
+    if (remote) {
+      const merged = merge(P, remote), ms = sig(merged);
+      if (ms !== sig(P)) { P = merged; store.set(K.prog, P); if (S.view !== 'test' && S.view !== 'result' && !M.open) render(); }
+      if (ms !== sig(remote)) cloud.dirty = true;
+    } else if (Object.keys(P.s).length || P.h.length) cloud.dirty = true;
+    setSync('ok');
+    if (cloud.dirty) queueCloud(300);
+  } catch (e) { fail(e); }
+}
+function queueCloud(ms){
+  if (!cloud.ref) return;
+  clearTimeout(cloud.timer);
+  cloud.timer = setTimeout(flushCloud, ms == null ? 1500 : ms);
+}
+async function flushCloud(){
+  if (!cloud.ref || cloud.writing || !cloud.dirty) return;
+  cloud.writing = true; cloud.dirty = false;
+  try {
+    const remote = await readRemote();
+    if (remote) {
+      const merged = merge(P, remote);
+      if (sig(merged) !== sig(P)) { P = merged; store.set(K.prog, P); if (S.view !== 'test' && S.view !== 'result' && !M.open) render(); }
+    }
+    await timeout(cloud.ref.set(JSON.parse(JSON.stringify(P))), 15000);
+    cloud.fails = 0; cloud.pulled = Date.now(); setSync('ok');
+  } catch (e) { cloud.dirty = true; fail(e); }
+  finally { cloud.writing = false; }
+}
+function fail(e){
+  const code = e && e.code;
+  if ((code === 'unavailable' || code === 'resource_exhausted' || code === 'deadline_exceeded' || code === 'aborted') && cloud.fails < 5) {
+    cloud.fails++; setSync('retry'); if (cloud.dirty) queueCloud(4000 * cloud.fails);
+  } else { cloud.ref = null; setSync('local'); }
+}
+
+/* ---------- question statistics and selection ---------- */
+const today = () => Math.floor(Date.now() / 864e5);
+const isWeak = q => { const s = P.s[q.id]; return !!s && s[1] > 0 && s[2] < 2; };
+const isMastered = q => { const s = P.s[q.id]; return !!s && s[2] >= 2; };
+function record(q, ok){
+  const s = P.s[q.id] || [0, 0, 0, 0];
+  s[0]++; if (ok) s[2]++; else { s[1]++; s[2] = 0; }
+  s[3] = today(); P.s[q.id] = s;
+}
+function shuffle(arr, rnd){
+  rnd = rnd || Math.random; const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); const x = a[i]; a[i] = a[j]; a[j] = x; }
+  return a;
+}
+function wsample(pool, n, w){
+  return pool.map(q => ({q, k:Math.pow(Math.random(), 1 / Math.max(w(q), 1e-6))})).sort((a, b) => b.k - a.k).slice(0, n).map(x => x.q);
+}
+function pickMock(){
+  let out = [];
+  for (const ch in QUOTA) out = out.concat(shuffle(Q.filter(q => q.ch === +ch)).slice(0, QUOTA[ch]));
+  return shuffle(out);
+}
+function pickWeak(){
+  const weak = Q.filter(isWeak);
+  const a = wsample(weak, Math.min(PAPER / 2, weak.length), q => {
+    const s = P.s[q.id];
+    return 1 + Math.min(s[1], 5) + (s[2] === 0 ? 2 : 0) + Math.min(Math.max(today() - s[3], 0), 7) * 0.3;
+  });
+  const got = new Set(a);
+  const b = wsample(Q.filter(q => !got.has(q)), PAPER - a.length, q => {
+    const s = P.s[q.id];
+    const w = !s ? 3 : isWeak(q) ? 1 : s[2] >= 2 ? 0.4 : 1.5;
+    return w * QUOTA[q.ch] / CHN[q.ch] * 100;
+  });
+  return shuffle(a.concat(b));
+}
+function pickChapter(ch){
+  const pool = Q.filter(q => q.ch === ch);
+  return shuffle(wsample(pool, Math.min(PAPER, pool.length), q => {
+    const s = P.s[q.id];
+    return !s ? 3 : isWeak(q) ? 4 : s[2] >= 2 ? 0.5 : 1.5;
+  }));
+}
+function hash(str){ let h = 2166136261; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+function mulberry(a){ return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let x = Math.imul(a ^ a >>> 15, 1 | a); x = x + Math.imul(x ^ x >>> 7, 61 | x) ^ x; return ((x ^ x >>> 14) >>> 0) / 4294967296; }; }
+function order(seed, q){ return q.type === 't' ? [0, 1] : shuffle(q.o.map((_, i) => i), mulberry(hash(seed + ':' + q.id))); }
+const optText = (q, i) => q.type === 't' ? (i === 0 ? 'True' : 'False') : q.o[i];
+const rightSet = q => q.type === 't' ? [q.o === 1 ? 0 : 1] : q.type === 'm' ? [0, 1] : [0];
+const isRight = (q, a) => { const r = rightSet(q); return a.length === r.length && r.every(x => a.includes(x)); };
+const ready = (q, a) => a.length === (q.type === 'm' ? 2 : 1);
+
+/* ---------- session ---------- */
+function startSession(kind, ch){
+  const qs = kind === 'm' ? pickMock() : kind === 'w' ? pickWeak() : pickChapter(ch);
+  S.ses = {id:Date.now(), kind, ch:ch || 0, fb:S.set.fb[kind], q:qs.map(q => q.id), ans:qs.map(() => []), chk:qs.map(() => 0), flag:qs.map(() => 0), guess:qs.map(() => 0), cur:0, t0:Date.now(), limit:kind === 'c' ? 0 : LIMIT};
+  saveSes(); show('test');
+}
+const remaining = () => S.ses && S.ses.limit ? S.ses.limit - Math.floor((Date.now() - S.ses.t0) / 1000) : null;
+const answered = z => z.fb === 'i' ? z.chk.filter(Boolean).length : z.ans.filter(a => a.length).length;
+function finish(isTimeout){
+  const z = S.ses; if (!z) return;
+  const qs = z.q.map(id => BYID.get(id));
+  let sc = 0;
+  qs.forEach((q, i) => {
+    const a = z.ans[i], ok = isRight(q, a);
+    if (ok) sc++;
+    if (!z.chk[i] && a.length) record(q, ok && !(z.guess && z.guess[i]));
+  });
+  const used = Math.round((Date.now() - z.t0) / 1000);
+  const item = {t:z.id, k:z.kind, c:z.ch, f:z.fb, sc, n:qs.length, d:z.limit ? Math.min(used, z.limit) : used, to:isTimeout ? 1 : 0, q:z.q.slice(), a:z.ans.map(a => a.join(''))};
+  const g = z.guess ? z.guess.map((v, i) => v && isRight(qs[i], z.ans[i]) ? i : -1).filter(i => i >= 0) : [];
+  if (g.length) item.g = g;
+  P.h.push(item); trimHistory();
+  S.ses = null; saveSes(); saveProg(true);
+  S.res = item; S.resFilter = sc === qs.length ? 'all' : 'wrong';
+  show('result');
+}
+function quit(){ S.ses = null; saveSes(); if (cloud.dirty) queueCloud(300); show('home'); }
+
+/* ---------- views ---------- */
+function mast(){
+  const wk = Q.filter(isWeak).length;
+  return '<header class="mast"><h1>Life in the UK <span>' + esc(t('app.mock')) + '</span></h1><p class="sub">' + esc(t('tagline', {n:Q.length})) + '</p></header>' +
+    '<nav class="nav" aria-label="' + esc(t('nav.label')) + '">' + HASHV.map(v =>
+      '<a href="#' + v + '" id="nav-' + v + '"' + (S.view === v ? ' aria-current="page"' : '') + '>' + esc(t('nav.' + v)) + (v === 'weak' && wk ? ' <b>' + wk + '</b>' : '') + '</a>').join('') + '</nav>';
+}
+function segHTML(kind){
+  const v = S.set.fb[kind];
+  return '<div><span class="lbl" id="fbl-' + kind + '">' + esc(t('fb.label')) + '</span><div class="seg" role="radiogroup" aria-labelledby="fbl-' + kind + '">' +
+    ['e', 'i'].map(m => '<label><input type="radio" name="fb-' + kind + '" id="fb-' + kind + '-' + m + '" value="' + m + '" data-fb="' + kind + '"' + (v === m ? ' checked' : '') + '><span>' + esc(t('fb.' + m)) + '</span></label>').join('') + '</div></div>';
+}
+function kindLabel(h){ return t('kind.' + h.k) + (h.k === 'c' && h.c ? ' · ' + t('res.ch', {n:h.c}) : ''); }
+function stem(q){ return q.type === 't' ? '<p class="hint" style="margin:0 0 6px" lang="en-GB">Is the statement below TRUE or FALSE?</p>' : ''; }
+function trendHTML(){
+  const m = P.h.filter(h => h.k === 'm').slice(-20);
+  if (m.length < 2) return '';
+  const W = 300, H = 84, x = i => 10 + i * (W - 20) / (m.length - 1), y = s => H - 10 - (s / PAPER) * (H - 20);
+  return '<section class="card"><h3>' + esc(t('trend.title')) + '</h3><svg class="spark" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(t('trend.aria', {s:m.map(h => h.sc).join(', ')})) + '">' +
+    '<line class="passline" x1="0" x2="' + W + '" y1="' + y(18) + '" y2="' + y(18) + '"/>' +
+    '<polyline class="tl" points="' + m.map((h, i) => x(i).toFixed(1) + ',' + y(h.sc).toFixed(1)).join(' ') + '"/>' +
+    m.map((h, i) => '<circle class="' + (h.sc >= 18 ? 'p' : 'f') + '" cx="' + x(i).toFixed(1) + '" cy="' + y(h.sc).toFixed(1) + '" r="3.5"/>').join('') +
+    '</svg><p class="muted small">' + esc(t('trend.pass', {n:m.length})) + '</p></section>';
+}
+function vHome(){
+  const mocks = P.h.filter(h => h.k === 'm'), last = mocks.slice(-5);
+  const avg = last.length ? (last.reduce((s, h) => s + h.sc, 0) / last.length) : null;
+  const seen = Q.filter(q => P.s[q.id]).length, mast_ = Q.filter(isMastered).length, wk = Q.filter(isWeak).length;
+  let h = mast();
+  if (S.ses) {
+    const z = S.ses;
+    h += '<section class="card banner"><h2>' + esc(t('resume.title')) + '</h2><p class="muted">' + esc(t('resume.meta', {kind:kindLabel({k:z.kind, c:z.ch}), a:answered(z), n:z.q.length})) + '</p>' + (z.limit && remaining() <= 0 ? '<p class="small" style="margin-top:6px">' + esc(t('resume.expired')) + '</p>' : '') +
+      '<div class="cardfoot"><button class="btn ghost" id="btn-drop" data-act="drop">' + esc(t('resume.drop')) + '</button><button class="btn" id="btn-resume" data-act="resume">' + esc(t('resume.go')) + '</button></div></section>';
+  }
+  h += '<section class="tiles" aria-label="' + esc(t('nav.home')) + '">' +
+    '<div class="tile"><b>' + (avg == null ? '–' : (Math.round(avg * 10) / 10) + '<small> / 24</small>') + '</b><span>' + esc(avg == null ? t('tile.avg') + '：' + t('tile.none') : t('tile.avg')) + '</span></div>' +
+    '<div class="tile"><b>' + seen + '<small> / ' + Q.length + '</small></b><span>' + esc(t('tile.seen')) + '</span></div>' +
+    '<div class="tile"><b>' + mast_ + '</b><span>' + esc(t('tile.mastered')) + '</span></div>' +
+    '<div class="tile"><b>' + wk + '</b><span>' + esc(t('tile.weak')) + '</span></div></section>';
+  h += '<section class="card paper"><h2>' + esc(t('mock.title')) + '</h2><p>' + esc(t('mock.desc')) + '</p><div class="cardfoot">' + segHTML('m') +
+    '<button class="btn" id="start-mock" data-act="start" data-kind="m">' + esc(t('start')) + '</button></div></section>';
+  h += '<section class="card paper"><h2>' + esc(t('weak.title')) + '</h2><p>' + esc(t('weak.desc')) + '</p><p class="muted small" style="margin-top:6px">' + esc(wk ? t('weak.count', {n:wk}) : t('weak.none')) + '</p><div class="cardfoot">' + segHTML('w') +
+    '<button class="btn" id="start-weak" data-act="start" data-kind="w">' + esc(t('start')) + '</button></div></section>';
+  h += trendHTML();
+  h += '<section class="card"><h2>' + esc(t('chap.title')) + '</h2><p class="muted">' + esc(t('chap.desc')) + '</p><div style="margin-top:12px">' + segHTML('c') + '</div><div class="chlist">';
+  for (let ch = 1; ch <= 5; ch++) {
+    const pool = Q.filter(q => q.ch === ch), n = pool.length, s = pool.filter(q => P.s[q.id]).length, m = pool.filter(isMastered).length, w = pool.filter(isWeak).length;
+    h += '<div class="chrow"><div><b>' + ch + '. ' + esc(CH[ch].en) + '</b>' + (S.set.lang === 'zh' ? '<small lang="zh-HK">' + esc(CH[ch].zh) + '</small>' : '') +
+      '<small>' + esc(t('chap.meta', {n, s, m})) + '</small></div><button class="btn sm ghost" id="start-ch-' + ch + '" data-act="start" data-kind="c" data-ch="' + ch + '">' + esc(t('start')) + '</button>' +
+      '<div class="meter" aria-hidden="true"><i class="m" style="width:' + (100 * m / n) + '%"></i><i class="x" style="width:' + (100 * w / n) + '%"></i><i style="width:' + (100 * Math.max(s - m - w, 0) / n) + '%"></i></div></div>';
+  }
+  h += '</div></section>' + footHTML();
+  return h;
+}
+function footHTML(){ return '<footer class="foot"><p id="sync">' + syncHTML() + '</p><p>' + esc(t('foot.note')) + '</p></footer>'; }
+
+function vTest(){
+  const z = S.ses, n = z.q.length, i = z.cur, q = BYID.get(z.q[i]), a = z.ans[i], done = !!z.chk[i], ord = order(z.id, q), rs = rightSet(q);
+  const rem = remaining(), last = i === n - 1;
+  let h = '<div class="tbar"><button class="btn sm ghost" id="btn-quit" data-act="quit">' + esc(t('test.quit')) + '</button>' +
+    '<div class="where">' + esc(t('test.q', {i:i + 1, n})) + '<small>' + esc(kindLabel({k:z.kind, c:z.ch})) + '</small></div>' +
+    (rem == null ? '<span></span>' : '<div class="timer' + (rem <= 300 ? ' low' : '') + '" id="timer" role="timer" aria-label="' + esc(t('test.timer')) + '">' + fmt(rem) + '</div>') +
+    '<button class="btn sm" id="btn-finish" data-act="finish">' + esc(t('test.finish')) + '</button></div>' +
+    '<div class="bar" aria-hidden="true"><i id="bar" style="width:' + (100 * answered(z) / n) + '%"></i></div>';
+  h += '<section class="card paper">' + (z.kind === 'm' ? '' : '<p class="kicker">' + esc(t('res.ch', {n:q.ch})) + ' · ' + esc(chName(q.ch)) + '</p>') +
+    stem(q) + '<h2 class="qtext" id="qh" tabindex="-1" lang="en-GB">' + esc(q.q) + '</h2>' +
+    (q.type === 'm' ? '<p class="hint" id="hint">' + esc(S.set.lang === 'en' ? t('test.two') : 'Select TWO answers. ' + t('test.two')) + '</p>' : '') +
+    '<fieldset class="opts" id="opts" aria-labelledby="qh">';
+  ord.forEach((oi, k) => {
+    const sel = a.includes(oi); let cls = 'opt' + (sel ? ' sel' : '') + (done ? ' locked' : ''), mark = '';
+    if (done) {
+      if (rs.includes(oi)) { cls += ' right'; mark = '<span class="mark ok">' + esc(t('test.answer')) + '</span>'; }
+      else if (sel) { cls += ' wrong'; mark = '<span class="mark bad">' + esc(t('res.yours')) + '</span>'; }
+    }
+    h += '<label class="' + cls + '"><input type="' + (q.type === 'm' ? 'checkbox' : 'radio') + '" name="opt" id="opt-' + k + '" value="' + oi + '"' + (sel ? ' checked' : '') + (done ? ' disabled' : '') + '>' +
+      '<span class="otext" lang="en-GB">' + esc(optText(q, oi)) + '</span>' + mark + '</label>';
+  });
+  h += '</fieldset>';
+  if (done) {
+    const ok = isRight(q, a);
+    h += '<div class="fbk ' + (ok ? 'ok' : 'bad') + '" id="fbk" role="status" tabindex="-1"><p class="verdict">' + esc(t(ok ? 'test.correct' : 'test.incorrect')) + '</p>' + expHTML(q) + '</div>';
+  }
+  h += '<div class="acts"><button class="btn ghost" id="btn-prev" data-act="prev"' + (i === 0 ? ' disabled' : '') + '>' + esc(t('test.prev')) + '</button>' +
+    '<button class="btn ghost' + (z.flag[i] ? ' on' : '') + '" id="btn-flag" data-act="flag" aria-pressed="' + (z.flag[i] ? 'true' : 'false') + '">' + esc(t(z.flag[i] ? 'test.flagged' : 'test.flag')) + '</button>' + guessBtn(z, i, q, a, done) + '<span class="sp"></span>';
+  if (z.fb === 'i' && !done) {
+    if (!last) h += '<button class="btn ghost" id="btn-skip" data-act="next">' + esc(t('test.skip')) + '</button>';
+    h += '<button class="btn" id="btn-check" data-act="check"' + (ready(q, a) ? '' : ' disabled') + '>' + esc(t('test.check')) + '</button>';
+  } else if (!last) h += '<button class="btn" id="btn-next" data-act="next">' + esc(t('test.next')) + '</button>';
+  else h += '<button class="btn" id="btn-finish2" data-act="finish">' + esc(t('test.finish')) + '</button>';
+  h += '</div></section>';
+  h += '<section class="gridbox" aria-label="' + esc(t('test.overview')) + '"><h3>' + esc(t('test.overview')) + '</h3><div class="grid" id="grid">';
+  for (let k = 0; k < n; k++) h += '<button class="' + cellCls(z, k) + '" id="cell-' + k + '" data-act="goto" data-i="' + k + '">' + (k + 1) + '</button>';
+  h += '</div><div class="legend"><span><i class="a"></i>' + esc(t('lg.ans')) + '</span><span><i class="f"></i>' + esc(t('lg.flag')) + '</span><span>' + esc(t('lg.cur')) + '</span></div></section>';
+  return h;
+}
+function cellCls(z, k){
+  let c = 'cell';
+  if (z.chk[k]) c += isRight(BYID.get(z.q[k]), z.ans[k]) ? ' r' : ' w';
+  else if (z.ans[k].length && z.fb === 'e') c += ' ans';
+  if (z.flag[k]) c += ' flag';
+  if (k === z.cur) c += ' cur';
+  return c;
+}
+function expHTML(q){
+  return '<div class="exp"><p lang="en-GB">' + esc(q.en) + '</p>' + (zhOn() ? '<p class="zh" lang="zh-HK">' + esc(q.zh) + '</p>' : '') + '</div>';
+}
+function guessBtn(z, i, q, a, done){
+  if (!z.guess) z.guess = z.q.map(() => 0);
+  const v = z.guess[i];
+  if (done && (!isRight(q, a))) return '';
+  if (v === 2) return '<button class="btn ghost on" id="btn-guess" disabled>' + esc(t('test.guessed')) + '</button>';
+  return '<button class="btn ghost' + (v ? ' on' : '') + '" id="btn-guess" data-act="guess" aria-pressed="' + (v ? 'true' : 'false') + '" title="' + esc(t('test.guessHint')) + '">' + esc(t(v ? 'test.guessOn' : 'test.guess')) + '</button>';
+}
+function revItem(q, a, num, seed, guessed){
+  const ok = isRight(q, a) && !guessed, rs = rightSet(q);
+  let h = '<li class="rev ' + (ok ? 'ok' : 'bad') + '"><div class="revhead">' + (num ? '<b>' + num + '</b>' : '') + '<span class="tag">' + esc(t(guessed ? 'res.guessTag' : ok ? 'res.right' : a.length ? 'res.wrongTag' : 'res.none')) + '</span><span>' + esc(t('res.ch', {n:q.ch})) + '</span></div>' +
+    stem(q) + '<p class="qtext sm" lang="en-GB">' + esc(q.q) + '</p><ul class="ropts">';
+  order(seed, q).forEach(oi => {
+    const right = rs.includes(oi), sel = a.includes(oi);
+    h += '<li class="' + (right ? 'right' : sel ? 'wrong' : '') + '"><span lang="en-GB">' + esc(optText(q, oi)) + '</span>' +
+      (right ? '<span class="mark ok">' + esc(t('test.answer')) + (sel ? ' · ' + esc(t('res.yours')) : '') + '</span>' : sel ? '<span class="mark bad">' + esc(t('res.yours')) + '</span>' : '') + '</li>';
+  });
+  return h + '</ul>' + expHTML(q) + '</li>';
+}
+function vResult(){
+  const r = S.res, need = Math.ceil(r.n * PASS_RATE), pass = r.sc >= need;
+  let h = '<header class="mast"><h1>' + esc(kindLabel(r)) + '</h1><p class="sub">' + esc(fmtDate(r.t)) + ' · ' + esc(t('fb.' + (r.f === 'i' ? 'i' : 'e'))) + '</p></header>';
+  h += '<section class="card paper"><div class="score"><div class="big">' + r.sc + '<small> / ' + r.n + '</small></div>' +
+    '<div class="stamp ' + (pass ? 'pass' : 'fail') + '">' + (S.set.lang === 'zh' ? (pass ? 'PASS' : 'FAIL') + '<br>' : '') + esc(t(pass ? 'res.pass' : 'res.fail')) + '</div></div>' +
+    '<div class="meta"><span>' + Math.round(100 * r.sc / r.n) + '%</span><span>' + esc(t('res.need', {n:need})) + '</span><span>' + esc(t('res.time', {t:fmt(r.d || 0)})) + '</span>' + (r.to ? '<span>' + esc(t('res.timeout')) + '</span>' : '') + '</div>' +
+    '<div class="cardfoot"><button class="btn ghost" id="btn-home" data-act="home">' + esc(t('res.home')) + '</button><button class="btn" id="btn-again" data-act="again">' + esc(t('res.again')) + '</button></div></section>';
+  if (!r.q || !r.a) return h + '<section class="card"><p class="muted">' + esc(t('res.nodetail')) + '</p></section>';
+  const rows = [];
+  r.q.forEach((id, i) => { const q = BYID.get(id); if (q) rows.push({q, a:String(r.a[i] || '').split('').map(Number), num:i + 1, g:!!(r.g && r.g.includes(i))}); });
+  h += '<section class="card"><h2>' + esc(t('res.byCh')) + '</h2><div class="chlist">';
+  for (let ch = 1; ch <= 5; ch++) {
+    const rs = rows.filter(x => x.q.ch === ch); if (!rs.length) continue;
+    const ok = rs.filter(x => isRight(x.q, x.a)).length;
+    h += '<div class="chrow"><div><b>' + ch + '. ' + esc(chName(ch)) + '</b></div><b>' + ok + ' / ' + rs.length + '</b><div class="meter" aria-hidden="true"><i class="m" style="width:' + (100 * ok / rs.length) + '%"></i></div></div>';
+  }
+  h += '</div></section>';
+  const wrong = rows.filter(x => !isRight(x.q, x.a)), list = S.resFilter === 'all' ? rows : wrong;
+  h += '<section><h2>' + esc(t('res.review')) + '</h2><div class="chips">' +
+    '<button class="chip" id="flt-wrong" data-act="filter" data-f="wrong" aria-pressed="' + (S.resFilter !== 'all') + '">' + esc(t('res.wrong', {n:wrong.length})) + '</button>' +
+    '<button class="chip" id="flt-all" data-act="filter" data-f="all" aria-pressed="' + (S.resFilter === 'all') + '">' + esc(t('res.all', {n:rows.length})) + '</button></div>';
+  h += list.length ? '<ol class="revlist">' + list.map(x => revItem(x.q, x.a, x.num, r.t, x.g)).join('') + '</ol>' : '<p class="muted" style="margin-top:12px">' + esc(t('res.allRight')) + '</p>';
+  return h + '</section>';
+}
+function vWeak(){
+  const all = Q.filter(isWeak).sort((a, b) => P.s[b.id][1] - P.s[a.id][1] || a.ch - b.ch);
+  const list = S.weakCh ? all.filter(q => q.ch === S.weakCh) : all;
+  let h = mast() + '<section class="card"><h2>' + esc(t('wk.title')) + '</h2><p class="muted">' + esc(t('wk.desc')) + '</p>';
+  if (!all.length) return h + '<p style="margin-top:12px">' + esc(t('wk.empty')) + '</p></section>' + footHTML();
+  h += '<div class="cardfoot"><span></span><button class="btn" id="start-weak2" data-act="start" data-kind="w">' + esc(t('wk.start')) + '</button></div></section>';
+  h += '<div class="chips"><button class="chip" id="wk-all" data-act="weakch" data-ch="0" aria-pressed="' + (!S.weakCh) + '">' + esc(t('wk.all', {n:all.length})) + '</button>';
+  for (let ch = 1; ch <= 5; ch++) { const c = all.filter(q => q.ch === ch).length; if (c) h += '<button class="chip" id="wk-ch-' + ch + '" data-act="weakch" data-ch="' + ch + '" aria-pressed="' + (S.weakCh === ch) + '">' + esc(t('res.ch', {n:ch})) + '（' + c + '）</button>'; }
+  h += '</div><ul class="revlist">' + list.map(q => {
+    const s = P.s[q.id];
+    return '<li class="rev bad"><div class="revhead"><span class="tag">' + esc(t('wk.stat', {w:s[1], s:s[0]})) + '</span><span>' + esc(t('res.ch', {n:q.ch})) + '</span></div>' + stem(q) + '<p class="qtext sm" lang="en-GB">' + esc(q.q) + '</p><ul class="ropts">' +
+      rightSet(q).map(oi => '<li class="right"><span lang="en-GB">' + esc(optText(q, oi)) + '</span><span class="mark ok">' + esc(t('test.answer')) + '</span></li>').join('') + '</ul>' + expHTML(q) + '</li>';
+  }).join('') + '</ul>';
+  return h + footHTML();
+}
+function vHistory(){
+  let h = mast() + '<section class="card"><h2>' + esc(t('hs.title')) + '</h2>';
+  if (!P.h.length) return h + '<p class="muted" style="margin-top:8px">' + esc(t('hs.empty')) + '</p></section>' + footHTML();
+  h += P.h.slice().reverse().map(r => {
+    const pass = r.sc >= Math.ceil(r.n * PASS_RATE);
+    return '<div class="hrow"><div><b>' + esc(kindLabel(r)) + '</b><br><span class="muted small">' + esc(fmtDate(r.t)) + '</span></div>' +
+      '<div><b>' + r.sc + ' / ' + r.n + '</b> <span class="pill ' + (pass ? 'pass' : 'fail') + '">' + esc(t(pass ? 'res.pass' : 'res.fail')) + '</span></div>' +
+      '<button class="btn sm ghost" data-act="open" data-t="' + r.t + '">' + esc(t('hs.view')) + '</button></div>';
+  }).join('');
+  return h + '</section>' + footHTML();
+}
+function radios(name, cur, opts){
+  return '<div class="seg" role="radiogroup" aria-labelledby="lbl-' + name + '">' + opts.map(o =>
+    '<label><input type="radio" name="set-' + name + '" id="set-' + name + '-' + o[0] + '" value="' + o[0] + '" data-set="' + name + '"' + (String(cur) === String(o[0]) ? ' checked' : '') + '><span>' + esc(o[1]) + '</span></label>').join('') + '</div>';
+}
+function chapterAnswers(){
+  const out = {1:[], 2:[], 3:[], 4:[], 5:[]}, seen = new Set();
+  for (const h of P.h.slice().sort((a, b) => a.t - b.t)) {
+    if (!h.q || !h.a) continue;
+    const spq = h.d && h.n ? h.d / h.n : 0;
+    h.q.forEach((id, i) => {
+      const q = BYID.get(id); if (!q) return;
+      const a = String(h.a[i] || '').split('').filter(x => x !== '').map(Number);
+      out[q.ch].push({t:h.t, ok:isRight(q, a) && !(h.g && h.g.includes(i)), first:!seen.has(id), spq});
+      seen.add(id);
+    });
+  }
+  return out;
+}
+const TARGET = 0.8;
+const pct = x => Math.round(x * 100);
+function dayKey(t){ const d = new Date(t); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function dayLabel(k){ const p = k.split('-'); return S.set.lang === 'en' ? (+p[2]) + '/' + (+p[1]) : (+p[1]) + '月' + (+p[2]) + '日'; }
+function trendSVG(ch, rows){
+  const by = new Map();
+  for (const r of rows) { const k = dayKey(r.t); const v = by.get(k) || [0, 0]; v[0] += r.ok ? 1 : 0; v[1]++; by.set(k, v); }
+  const days = Array.from(by.keys()).filter(k => by.get(k)[1] >= 3).sort();
+  if (days.length < 2) return '<p class="muted small" style="margin-top:6px">' + esc(t('an.oneDay')) + '</p>';
+  const W = 320, H = 130, L = 34, R = 10, T = 10, B = 22;
+  const x = i => L + i * (W - L - R) / (days.length - 1), y = v => T + (1 - v) * (H - T - B);
+  const pts = days.map((k, i) => { const v = by.get(k); return {k, i, c:v[0], n:v[1], r:v[0] / v[1]}; });
+  let g = '';
+  for (const v of [0, .5, 1]) g += '<line class="gl" x1="' + L + '" x2="' + (W - R) + '" y1="' + y(v) + '" y2="' + y(v) + '"/><text x="' + (L - 6) + '" y="' + (y(v) + 4) + '" text-anchor="end">' + pct(v) + '%</text>';
+  g += '<line class="pl" x1="' + L + '" x2="' + (W - R) + '" y1="' + y(.75) + '" y2="' + y(.75) + '"/>';
+  g += '<text x="' + L + '" y="' + (H - 6) + '">' + esc(dayLabel(days[0])) + '</text><text x="' + (W - R) + '" y="' + (H - 6) + '" text-anchor="end">' + esc(dayLabel(days[days.length - 1])) + '</text>';
+  g += '<polyline class="ln" points="' + pts.map(p => x(p.i).toFixed(1) + ',' + y(p.r).toFixed(1)).join(' ') + '"/>';
+  for (const p of pts) {
+    const tip = dayLabel(p.k) + '：' + p.c + ' / ' + p.n + '（' + pct(p.r) + '%）';
+    g += '<g><title>' + esc(tip) + '</title><circle class="hit" cx="' + x(p.i).toFixed(1) + '" cy="' + y(p.r).toFixed(1) + '" r="12"/><circle class="pt" cx="' + x(p.i).toFixed(1) + '" cy="' + y(p.r).toFixed(1) + '" r="4.5"/></g>';
+  }
+  const aria = t('an.chart', {n:ch, s:pts.map(p => dayLabel(p.k) + ' ' + pct(p.r) + '%').join(', ')});
+  return '<svg class="anchart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(aria) + '">' + g + '</svg>';
+}
+function chapterModel(A){
+  const all = [].concat(A[1], A[2], A[3], A[4], A[5]);
+  const rp = all.filter(r => !r.first), pooledRep = rp.length >= 20 ? rp.filter(r => r.ok).length / rp.length : 0.9;
+  const sp = all.map(r => r.spq).filter(x => x > 0).sort((a, b) => a - b), spq = sp.length ? Math.min(Math.max(sp[Math.floor(sp.length / 2)], 5), 60) : 15;
+  const papers = P.h.length, mocks = P.h.filter(h => h.k === 'm').length, info = {};
+  for (let ch = 1; ch <= 5; ch++) {
+    const rows = A[ch], f = rows.filter(r => r.first), r = rows.filter(r => !r.first);
+    const pool = Q.filter(q => q.ch === ch), size = pool.length, unseen = pool.filter(q => !P.s[q.id]).length, seenN = size - unseen;
+    const first = f.length ? f.filter(x => x.ok).length / f.length : 0;
+    const rep = r.length >= 20 ? r.filter(x => x.ok).length / r.length : pooledRep;
+    const cov = seenN / size, est = cov * rep + (1 - cov) * first;
+    const I = {n:rows.length, fN:f.length, rN:r.length, first, rep, cov, est, size, unseen, seenN, weak:pool.filter(isWeak).length, lose:QUOTA[ch] * (1 - est)};
+    const needFirst = Math.min(50, size);
+    I.showAcc = rows.length >= 20;
+    I.lockTime = [];
+    if (papers < 5) I.lockTime.push(t('an.lockPapers', {n:5 - papers}));
+    if (f.length < needFirst) I.lockTime.push(t('an.lockFirst', {n:needFirst - f.length}));
+    if (!I.lockTime.length) {
+      if (est >= TARGET) I.met = true;
+      else {
+        const gain = rep - first;
+        const q = gain > 0.05 ? Math.ceil((TARGET - est) / gain * size) : Infinity;
+        if (q > unseen) I.notes = true;
+        else { const mins = q * 2 * spq / 60; I.need = {q, a:Math.max(1, Math.round(mins * 0.75)), b:Math.max(2, Math.round(mins * 1.5)), pa:Math.max(1, Math.round(q * 2 * 0.75 / 24)), pb:Math.max(1, Math.ceil(q * 2 * 1.5 / 24))}; }
+      }
+    }
+    info[ch] = I;
+  }
+  return {info, mocks, papers};
+}
+function fmtMin(sec){ const m = Math.round(sec / 60); return m >= 60 ? t('tm.hm', {h:Math.floor(m / 60), m:m % 60}) : t('tm.min', {n:m}); }
+function timeCard(){
+  const hs = P.h.filter(h => h.d > 0 && h.n > 0);
+  if (!hs.length) return '';
+  const sp = hs.map(h => h.d / h.n).sort((a, b) => a - b), med = sp[Math.floor(sp.length / 2)];
+  const capOn = hs.length >= 5; let capped = 0;
+  const adj = h => { if (!capOn) return h.d; const c = 3 * med * h.n; if (h.d > c) { capped++; return c; } return h.d; };
+  const perCh = {1:0, 2:0, 3:0, 4:0, 5:0}, days = new Map(); let total = 0, answers = 0;
+  for (const h of hs) {
+    const d = adj(h); total += d; answers += h.n;
+    if (h.q && h.q.length) { const qs = h.q.map(id => BYID.get(id)).filter(Boolean); for (const q of qs) perCh[q.ch] += d / qs.length; }
+    else if (h.k === 'c' && h.c) perCh[h.c] += d;
+    else for (const ch in QUOTA) perCh[ch] += d * QUOTA[ch] / 24;
+    const k = dayKey(h.t); days.set(k, (days.get(k) || 0) + d);
+  }
+  const keys = []; for (let i = 13; i >= 0; i--) keys.push(dayKey(Date.now() - i * 864e5));
+  const vals = keys.map(k => Math.round((days.get(k) || 0) / 60));
+  const W = 320, H = 130, L = 30, R = 6, T = 10, B = 22, mx = Math.max(10, Math.ceil(Math.max.apply(null, vals) / 10) * 10);
+  const bw = (W - L - R) / keys.length, y = v => T + (1 - v / mx) * (H - T - B);
+  let g = '';
+  for (const v of [0, mx / 2, mx]) g += '<line class="gl" x1="' + L + '" x2="' + (W - R) + '" y1="' + y(v) + '" y2="' + y(v) + '"/><text x="' + (L - 5) + '" y="' + (y(v) + 4) + '" text-anchor="end">' + v + '</text>';
+  keys.forEach((k, i) => {
+    const x = L + i * bw, v = vals[i], tip = dayLabel(k) + '：' + t('tm.min', {n:v});
+    g += '<g><title>' + esc(tip) + '</title><rect class="hit" x="' + x.toFixed(1) + '" y="' + T + '" width="' + bw.toFixed(1) + '" height="' + (H - T - B) + '"/>' +
+      (v ? '<rect class="tb" x="' + (x + 2).toFixed(1) + '" y="' + y(v).toFixed(1) + '" width="' + Math.max(bw - 4, 2).toFixed(1) + '" height="' + (y(0) - y(v)).toFixed(1) + '" rx="3"/>' : '') + '</g>';
+  });
+  g += '<text x="' + L + '" y="' + (H - 6) + '">' + esc(dayLabel(keys[0])) + '</text><text x="' + (W - R) + '" y="' + (H - 6) + '" text-anchor="end">' + esc(dayLabel(keys[13])) + '</text>';
+  const aria = t('tm.chart', {s:keys.map((k, i) => dayLabel(k) + ' ' + vals[i]).join(', ')});
+  return '<section class="card"><h2>' + esc(t('tm.title')) + '</h2><div class="anstats">' +
+    '<div><b>' + esc(fmtMin(total)) + '</b><span>' + esc(t('tm.total')) + '</span></div>' +
+    '<div><b>' + answers + '</b><span>' + esc(t('tm.answers')) + '</span></div>' +
+    '<div><b>' + hs.length + '</b><span>' + esc(t('tm.papers')) + '</span></div>' +
+    '<div><b>' + esc(t('tm.sec', {n:Math.round(med)})) + '</b><span>' + esc(t('tm.perQ')) + '</span></div></div>' +
+    '<h3 style="margin-top:14px">' + esc(t('tm.daily')) + '</h3><svg class="anchart tmbar" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(aria) + '">' + g + '</svg>' +
+    '<h3 style="margin-top:14px">' + esc(t('tm.byCh')) + '</h3><div class="tmch">' + [1, 2, 3, 4, 5].map(ch => '<span>' + ch + '. ' + esc(chName(ch)) + '</span><b>' + esc(fmtMin(perCh[ch])) + '</b>').join('') + '</div>' +
+    '<p class="muted small" style="margin-top:10px">' + esc(t('tm.note')) + ' ' + esc(capOn ? (capped ? t('tm.capNote', {n:capped}) : '') : t('tm.capWait')) + '</p></section>';
+}
+function vAnalysis(){
+  const A = chapterAnswers(), total = Object.values(A).reduce((s, r) => s + r.length, 0);
+  let h = mast() + '<section class="card"><h2>' + esc(t('an.title')) + '</h2><p class="muted">' + esc(t('an.desc')) + '</p></section>';
+  if (!total) return h + '<section class="card"><p>' + esc(t('an.empty')) + '</p></section>' + footHTML();
+  const M_ = chapterModel(A), info = M_.info;
+  if (M_.mocks >= 3) {
+    const pred = [1, 2, 3, 4, 5].reduce((s, ch) => s + QUOTA[ch] * info[ch].est, 0);
+    h += '<section class="card paper"><h2>' + esc(t('an.pred')) + '</h2><div class="score" style="margin-top:8px"><div class="big">' + (Math.round(pred * 10) / 10) + '<small> / 24</small></div>' +
+      '<div class="stamp ' + (pred >= 18 ? 'pass' : 'fail') + '">' + esc(t(pred >= 18 ? 'res.pass' : 'res.fail')) + '</div></div><p class="muted small" style="margin-top:10px">' + esc(t('an.predNote2')) + '</p></section>';
+  } else h += '<section class="card paper"><h2>' + esc(t('an.pred')) + '</h2><p class="muted" style="margin-top:6px">' + esc(t('an.lockPred', {n:3 - M_.mocks})) + '</p></section>';
+  const order = [1, 2, 3, 4, 5].sort((a, b) => info[b].lose - info[a].lose);
+  const needs = order.filter(ch => info[ch].need), sa = needs.reduce((s, ch) => s + info[ch].need.a, 0), sb = needs.reduce((s, ch) => s + info[ch].need.b, 0);
+  const timed = order.filter(ch => !info[ch].lockTime.length);
+  h += '<section class="card"><h2>' + esc(t('an.prio')) + '</h2><p class="muted small">' + esc(t('an.prioNote')) + '</p><ol class="prio">' + order.map((ch, i) => {
+    const I = info[ch];
+    const sub = I.lockTime.length ? t('an.lockTime', {parts:I.lockTime.join(t('an.and'))}) : I.met ? t('an.met') : I.notes ? t('an.notes') : t('an.need', I.need);
+    return '<li><span class="rk">' + (i + 1) + '</span><span><b>' + ch + '. ' + esc(chName(ch)) + '</b><br>' + esc(t('an.prio2', {n:Math.round(I.lose * 10) / 10})) + '<br><span class="muted small">' + esc(sub) + '</span></span></li>';
+  }).join('') + '</ol>' + (timed.length ? '<p class="annote"><b>' + esc(needs.length ? t('an.total', {a:sa, b:sb}) : t('an.allMet')) + '</b></p>' : '') +
+    '<details style="margin-top:10px"><summary class="small" style="cursor:pointer">' + esc(t('an.howTitle')) + '</summary><p class="muted small" style="margin-top:6px">' + esc(t('an.how')) + '</p></details></section>';
+  h += timeCard();
+  for (let ch = 1; ch <= 5; ch++) {
+    const I = info[ch];
+    const miss = Q.filter(q => q.ch === ch && isWeak(q)).sort((a, b) => P.s[b.id][1] - P.s[a.id][1] || P.s[b.id][0] - P.s[a.id][0]).slice(0, 3);
+    const accBox = (v, label) => '<div><b>' + (I.showAcc ? pct(v) + '%' : '–') + '</b><span>' + esc(label) + '</span></div>';
+    const sub = I.lockTime.length ? t('an.lockTime', {parts:I.lockTime.join(t('an.and'))}) : I.met ? t('an.met') : I.notes ? t('an.notes') : t('an.need', I.need);
+    h += '<section class="card"><div class="anhead"><h2>' + ch + '. ' + esc(CH[ch].en) + '</h2>' + (S.set.lang === 'zh' ? '<span class="muted small" lang="zh-HK">' + esc(CH[ch].zh) + '</span>' : '') + '</div>' +
+      '<div class="anstats">' + accBox(I.first, t('an.first')) + accBox(I.rep, t('an.repeat')) +
+      '<div><b>' + I.seenN + '<small class="muted" style="font-size:.6em"> / ' + I.size + '</small></b><span>' + esc(t('an.coverage')) + '</span></div>' +
+      '<div><b>' + I.weak + '</b><span>' + esc(t('an.weak')) + '</span></div></div>' +
+      (I.showAcc ? '<p class="annote"><b>' + esc(t('an.est', {p:pct(I.est), g:pct(TARGET)})) + '</b></p>' : '<p class="annote muted">' + esc(t('an.lockAcc', {n:20 - I.n})) + '</p>') +
+      '<p class="small" style="margin-top:4px">' + esc(sub) + ' <span class="muted">' + esc(t('an.answers', {n:I.n})) + '</span></p>' +
+      '<h3 style="margin-top:14px">' + esc(t('an.trend')) + '</h3>' + trendSVG(ch, A[ch]) + '<p class="muted small">' + esc(t('an.trendNote')) + '</p>' +
+      '<h3 style="margin-top:14px">' + esc(t('an.miss')) + '</h3>' + (miss.length ? '<ol class="miss">' + miss.map(q => '<li><span lang="en-GB">' + esc(q.q) + '</span> <span class="muted small">' + esc(t('an.missStat', {w:P.s[q.id][1], s:P.s[q.id][0]})) + '</span></li>').join('') + '</ol>' : '<p class="muted small">' + esc(t('an.missNone')) + '</p>') + '</section>';
+  }
+  return h + footHTML();
+}
+function vSettings(){
+  return mast() + '<section class="card"><h2>' + esc(t('set.title')) + '</h2>' +
+    '<div class="setrow"><span class="lbl" id="lbl-lang">' + esc(t('set.lang')) + '</span>' + radios('lang', S.set.lang, [['zh', '中文'], ['en', 'English']]) + '</div>' +
+    '<div class="setrow"><span class="lbl" id="lbl-zh">' + esc(t('set.zh')) + '</span>' + radios('zh', zhOn() ? 1 : 0, [[1, t('set.zhOn')], [0, t('set.zhOff')]]) + '<p class="muted small">' + esc(t('set.zhHint')) + '</p></div>' +
+    '<div class="setrow"><span class="lbl" id="lbl-theme">' + esc(t('set.theme')) + '</span>' + radios('theme', S.set.theme, [['auto', t('th.auto')], ['light', t('th.light')], ['dark', t('th.dark')]]) + '</div>' +
+    '<div class="setrow"><span class="lbl">' + esc(t('set.sync')) + '</span><p id="sync" style="margin-top:0">' + syncHTML() + '</p></div>' +
+    '<div class="setrow"><span class="lbl">' + esc(t('io.title')) + '</span><p class="muted small" style="margin:0 0 10px">' + esc(t('io.hint')) + '</p>' +
+      '<div class="acts" style="margin-top:0"><button class="btn sm" id="btn-export" data-act="exp">' + esc(t('io.export')) + '</button></div>' +
+      '<div id="exp-box" hidden style="margin-top:10px"><textarea id="exp-text" class="iobox" readonly rows="5"></textarea>' +
+      '<div class="acts" style="margin-top:8px"><button class="btn sm ghost" id="btn-copy" data-act="copyexp">' + esc(t('io.copy')) + '</button>' +
+      (inArtifact() ? '' : '<button class="btn sm ghost" id="btn-dl" data-act="dlexp">' + esc(t('io.download')) + '</button>') + '</div></div>' +
+      '<label class="lbl" for="imp-file" style="margin-top:16px">' + esc(t('io.file')) + '</label><input type="file" id="imp-file" accept=".json,.txt,application/json,text/plain">' +
+      '<label class="lbl" for="imp-text" style="margin-top:10px">' + esc(t('io.paste')) + '</label><textarea id="imp-text" class="iobox" rows="4"></textarea>' +
+      '<div class="acts" style="margin-top:8px"><button class="btn sm" id="btn-import" data-act="imp">' + esc(t('io.import')) + '</button></div>' +
+      '<p class="small" id="io-msg" role="status" style="margin-top:8px"></p></div>' +
+    '<div class="setrow"><button class="btn danger" id="btn-reset" data-act="reset">' + esc(t('set.reset')) + '</button><p class="muted small">' + esc(t('set.resetHint')) + '</p></div></section>' +
+    '<footer class="foot"><p>' + esc(t('foot.note')) + '</p></footer>';
+}
+function render(){
+  document.documentElement.lang = uiLang();
+  if (S.view === 'test' && !S.ses) S.view = 'home';
+  if (S.view === 'result' && !S.res) S.view = 'home';
+  app.innerHTML = S.view === 'test' ? vTest() : S.view === 'result' ? vResult() : S.view === 'weak' ? vWeak() : S.view === 'history' ? vHistory() : S.view === 'analysis' ? vAnalysis() : S.view === 'settings' ? vSettings() : vHome();
+}
+function show(v){
+  S.view = v;
+  if (HASHV.includes(v) && location.hash !== '#' + v) { try { location.hash = v; return; } catch (e) {} }
+  render(); window.scrollTo(0, 0);
+}
+function applyTheme(){
+  const th = S.set.theme;
+  if (th === 'light' || th === 'dark') document.documentElement.setAttribute('data-theme', th);
+  else document.documentElement.removeAttribute('data-theme');
+}
+
+/* ---------- modal ---------- */
+function modal(o){
+  M.open = true; M.onOk = o.onOk; M.back = document.activeElement;
+  mroot.innerHTML = '<div class="modal-bg" data-act="modal-cancel"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><h2 id="modal-title">' + esc(o.title) + '</h2><p>' + esc(o.body) + '</p>' +
+    '<div class="row"><button class="btn ghost" id="modal-cancel" data-act="modal-cancel">' + esc(o.cancel) + '</button><button class="btn' + (o.danger ? ' danger' : '') + '" id="modal-ok" data-act="modal-ok">' + esc(o.ok) + '</button></div></div></div>';
+  const b = document.getElementById('modal-ok'); if (b) b.focus();
+}
+function closeModal(){
+  if (!M.open) return;
+  M.open = false; M.onOk = null; mroot.innerHTML = '';
+  if (M.back && document.contains(M.back) && M.back.focus) M.back.focus();
+}
+
+/* ---------- test interactions ---------- */
+function choose(oi){
+  const z = S.ses; if (!z || S.view !== 'test') return;
+  const k = z.cur, q = BYID.get(z.q[k]); if (z.chk[k]) return;
+  let a = z.ans[k];
+  if (q.type === 'm') {
+    if (a.includes(oi)) a = a.filter(x => x !== oi);
+    else if (a.length < 2) a = a.concat(oi);
+    else { const hEl = document.getElementById('hint'); if (hEl) { hEl.classList.add('flash'); setTimeout(() => hEl.classList.remove('flash'), 1200); } }
+  } else a = [oi];
+  z.ans[k] = a; saveSes(); syncOpts();
+}
+function syncOpts(){
+  const z = S.ses, k = z.cur, q = BYID.get(z.q[k]), a = z.ans[k];
+  document.querySelectorAll('#opts input').forEach(inp => {
+    const on = a.includes(+inp.value); inp.checked = on;
+    inp.closest('.opt').classList.toggle('sel', on);
+  });
+  const c = document.getElementById('btn-check'); if (c) c.disabled = !ready(q, a);
+  const cell = document.getElementById('cell-' + k); if (cell) cell.className = cellCls(z, k);
+  const bar = document.getElementById('bar'); if (bar) bar.style.width = (100 * answered(z) / z.q.length) + '%';
+}
+function goto(i){
+  const z = S.ses; if (!z) return;
+  z.cur = Math.max(0, Math.min(z.q.length - 1, i)); saveSes(); render(); window.scrollTo(0, 0);
+  const qh = document.getElementById('qh'); if (qh) qh.focus({preventScroll:true});
+}
+function check(){
+  const z = S.ses, i = z.cur, q = BYID.get(z.q[i]);
+  if (z.chk[i] || !ready(q, z.ans[i])) return;
+  if (!z.guess) z.guess = z.q.map(() => 0);
+  const okNow = isRight(q, z.ans[i]);
+  z.chk[i] = 1; record(q, okNow && !z.guess[i]); if (okNow && z.guess[i]) z.guess[i] = 2; saveSes(); saveProg(false); render();
+  const f = document.getElementById('fbk'); if (f) { f.focus({preventScroll:true}); if (f.scrollIntoView) f.scrollIntoView({block:'nearest'}); }
+}
+function askFinish(){
+  const z = S.ses, un = z.q.length - z.ans.filter(a => a.length).length;
+  modal({title:t('m.finish.title'), body:un ? t('m.finish.un', {n:un}) : t('m.finish.all'), ok:t('m.finish.ok'), cancel:t('m.back'), onOk:() => finish(false)});
+}
+function askQuit(){
+  const z = S.ses;
+  modal({title:t('m.quit.title'), body:t(z.fb === 'i' ? 'm.quit.i' : 'm.quit.e'), ok:t('m.quit.ok'), cancel:t('m.back'), danger:true, onOk:quit});
+}
+function begin(kind, ch){
+  if (S.ses) modal({title:t('m.new.title'), body:t('m.new.body'), ok:t('m.new.ok'), cancel:t('m.cancel'), onOk:() => startSession(kind, ch)});
+  else startSession(kind, ch);
+}
+function inArtifact(){ return /claudeusercontent\.com$/.test(location.hostname) || !!(window.claude && window.claude.use); }
+function parseImport(txt){
+  let o = JSON.parse(String(txt).trim().replace(/^\uFEFF/, ''));
+  if (o && typeof o.p === 'string') o = JSON.parse(o.p);
+  else if (o && o.app === 'lituk') o = o.progress;
+  if (!valid(o)) throw new Error('bad');
+  const s = {};
+  for (const k in o.s) { const v = o.s[k]; if (Array.isArray(v) && v.length >= 4 && v.slice(0, 4).every(x => typeof x === 'number')) s[k] = v.slice(0, 4); }
+  const h = o.h.filter(x => x && typeof x.t === 'number' && typeof x.sc === 'number' && typeof x.n === 'number' && ['m', 'w', 'c'].includes(x.k));
+  return {v:1, r:o.r || 0, s, h};
+}
+const ACT = {
+  start(el){ begin(el.dataset.kind, +el.dataset.ch || 0); },
+  resume(){ show('test'); tick(); },
+  drop(){ askQuit(); },
+  prev(){ goto(S.ses.cur - 1); },
+  next(){ goto(S.ses.cur + 1); },
+  goto(el){ goto(+el.dataset.i); },
+  guess(){
+    const z = S.ses, i = z.cur, q = BYID.get(z.q[i]);
+    if (!z.guess) z.guess = z.q.map(() => 0);
+    if (z.chk[i]) {
+      if (!isRight(q, z.ans[i]) || z.guess[i] === 2) return;
+      const st = P.s[q.id]; if (st) { st[1]++; st[2] = 0; st[3] = today(); }
+      z.guess[i] = 2; saveSes(); saveProg(false);
+    } else { z.guess[i] = z.guess[i] ? 0 : 1; saveSes(); }
+    render(); const b = document.getElementById('btn-guess'); if (b) b.focus();
+  },
+  flag(){ const z = S.ses; z.flag[z.cur] = z.flag[z.cur] ? 0 : 1; saveSes(); render(); const b = document.getElementById('btn-flag'); if (b) b.focus(); },
+  check(){ check(); },
+  finish(){ askFinish(); },
+  quit(){ askQuit(); },
+  home(){ show('home'); },
+  again(){ const r = S.res; begin(r.k, r.c || 0); },
+  filter(el){ S.resFilter = el.dataset.f; render(); const b = document.getElementById('flt-' + S.resFilter); if (b) b.focus(); },
+  weakch(el){ S.weakCh = +el.dataset.ch; render(); },
+  open(el){ const r = P.h.find(x => String(x.t) === el.dataset.t); if (r) { S.res = r; S.resFilter = 'wrong'; show('result'); } },
+  exp(){
+    const box = document.getElementById('exp-box'), ta = document.getElementById('exp-text');
+    ta.value = JSON.stringify({app:'lituk', v:1, exported:Date.now(), progress:P, settings:S.set});
+    box.hidden = false; ta.focus(); ta.select();
+  },
+  copyexp(){
+    const ta = document.getElementById('exp-text'), msg = document.getElementById('io-msg');
+    const ok = () => { msg.textContent = t('io.copied'); };
+    const manual = () => { ta.focus(); ta.select(); let done = false; try { done = document.execCommand('copy'); } catch (e) {} msg.textContent = t(done ? 'io.copied' : 'io.copyFail'); };
+    try { navigator.clipboard.writeText(ta.value).then(ok, manual); } catch (e) { manual(); }
+  },
+  dlexp(){
+    const ta = document.getElementById('exp-text');
+    try { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([ta.value], {type:'application/json'})); a.download = 'lituk-backup-' + new Date().toISOString().slice(0, 10) + '.json'; document.body.appendChild(a); a.click(); a.remove(); } catch (e) {}
+  },
+  imp(){
+    const msg = document.getElementById('io-msg'); let inc;
+    try { inc = parseImport(document.getElementById('imp-text').value); } catch (e) { msg.textContent = t('io.bad'); return; }
+    const have = new Set(P.h.map(h => h.t));
+    modal({title:t('m.imp.title'), body:t('m.imp.body', {h:inc.h.length, nh:inc.h.filter(h => !have.has(h.t)).length, s:Object.keys(inc.s).length}), ok:t('m.imp.ok'), cancel:t('m.cancel'), onOk:() => {
+      inc.r = P.r || 0; P = merge(P, inc); saveProg(true); render();
+      const m = document.getElementById('io-msg'); if (m) m.textContent = t('io.done');
+    }});
+  },
+  reset(){
+    modal({title:t('m.reset.title'), body:t('m.reset.body'), ok:t('m.reset.ok'), cancel:t('m.cancel'), danger:true, onOk:() => {
+      P = blank(Date.now()); S.ses = null; S.res = null; saveSes(); saveProg(true); render();
+    }});
+  }
+};
+document.addEventListener('click', e => {
+  const el = e.target.closest ? e.target.closest('[data-act]') : null; if (!el) return;
+  const a = el.dataset.act;
+  if (a === 'modal-cancel') { if (el.classList.contains('modal-bg') && e.target !== el) return; closeModal(); return; }
+  if (a === 'modal-ok') { const fn = M.onOk; closeModal(); if (fn) fn(); return; }
+  if (el.disabled) return;
+  if ((a === 'prev' || a === 'next' || a === 'goto' || a === 'flag' || a === 'check' || a === 'finish' || a === 'quit') && !S.ses) return;
+  if (ACT[a]) ACT[a](el);
+});
+document.addEventListener('change', e => {
+  const el = e.target; if (!el || !el.dataset) return;
+  if (el.name === 'opt') { choose(+el.value); return; }
+  if (el.dataset.fb) { S.set.fb[el.dataset.fb] = el.value === 'i' ? 'i' : 'e'; saveSet(); return; }
+  if (el.id === 'imp-file' && el.files && el.files[0]) {
+    const r = new FileReader();
+    r.onload = () => { const ta = document.getElementById('imp-text'); if (ta) ta.value = String(r.result || ''); };
+    r.readAsText(el.files[0]); return;
+  }
+  if (el.dataset.set) {
+    const k = el.dataset.set;
+    if (k === 'lang') S.set.lang = el.value === 'en' ? 'en' : 'zh';
+    if (k === 'zh') S.set.zh = el.value === '1';
+    if (k === 'theme') S.set.theme = el.value;
+    saveSet(); applyTheme(); render();
+    const b = document.getElementById(el.id); if (b) b.focus();
+  }
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && M.open) { closeModal(); return; }
+  if (S.view !== 'test' || M.open || !S.ses || e.metaKey || e.ctrlKey || e.altKey) return;
+  const n = ['1', '2', '3', '4'].indexOf(e.key); if (n < 0) return;
+  const z = S.ses, q = BYID.get(z.q[z.cur]), ord = order(z.id, q);
+  if (n < ord.length) { choose(ord[n]); e.preventDefault(); }
+});
+window.addEventListener('hashchange', () => {
+  const v = location.hash.slice(1);
+  if (HASHV.includes(v)) { closeModal(); S.view = v; render(); window.scrollTo(0, 0); }
+});
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') { if (cloud.dirty) { clearTimeout(cloud.timer); flushCloud(); } }
+  else if (cloud.ref && Date.now() - cloud.pulled > 5 * 60 * 1000 && !cloud.writing) pull();
+});
+function tick(){
+  if (S.view !== 'test' || !S.ses || !S.ses.limit) return;
+  const r = remaining();
+  if (r <= 0) { closeModal(); finish(true); return; }
+  const el = document.getElementById('timer');
+  if (el) { el.textContent = fmt(r); el.classList.toggle('low', r <= 300); }
+}
+setInterval(tick, 500);
+
+/* ---------- boot ---------- */
+let booted = false;
+function boot(data){
+  if (booted) return; booted = true;
+  loadLocal(); applyTheme();
+  const hv = location.hash.slice(1);
+  S.view = HASHV.includes(hv) ? hv : 'home';
+  if (data && data.view === 'test' && S.ses) S.view = 'test';
+  render();
+  initCloud();
+}
+try { const hot = window.claude && window.claude.hot; if (hot && typeof hot.snapshot === 'function') hot.snapshot(() => ({view:S.view})); } catch (e) {}
+try {
+  const hot = window.claude && window.claude.hot;
+  if (hot && typeof hot.ready === 'function') { hot.ready(boot); setTimeout(() => boot({}), 1500); }
+  else boot(hot && hot.data ? hot.data : {});
+} catch (e) { boot({}); }
+})();
+</script>
+</body>
+</html>
